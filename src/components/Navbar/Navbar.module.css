@@ -29,7 +29,7 @@
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
-  margin-bottom: 40px;
+  margin-top: 46px;
 }
 
 .burger__line {
@@ -110,7 +110,7 @@
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 98;
-  display: none; 
+  display: none;
 }
 
 /* Мобильная версия */

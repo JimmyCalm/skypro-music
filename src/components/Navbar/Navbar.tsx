@@ -18,7 +18,7 @@ export default function Navbar() {
 
   return (
     <nav className={`${styles.nav} ${isMenuOpen ? styles.nav_menu_open : ''}`}>
-      <div className={styles.nav__logo}>
+      <Link href="/" className={styles.nav__logo}>
         <Image
           src="/img/logo.png"
           alt="logo"
@@ -27,9 +27,8 @@ export default function Navbar() {
           className={styles.logo__image}
           priority
         />
-      </div>
+      </Link>
 
-      {/* Бургер меню - всегда на своем месте */}
       <div
         className={`${styles.nav__burger} ${isMenuOpen ? styles.nav__burger_open : ''}`}
         onClick={toggleMenu}
@@ -39,7 +38,6 @@ export default function Navbar() {
         <span className={styles.burger__line}></span>
       </div>
 
-      {/* Основное меню - скрывается/показывается */}
       <div className={styles.nav__menu}>
         <ul className={styles.menu__list}>
           <li className={styles.menu__item}>
@@ -68,7 +66,6 @@ export default function Navbar() {
         </ul>
       </div>
 
-      {/* Оверлей для закрытия меню по клику вне его (только на мобильных) */}
       {isMenuOpen && (
         <div className={styles.menu__overlay} onClick={closeMenu} />
       )}
