@@ -9,7 +9,7 @@ export default function SignUp() {
         <div className={styles.containerEnter}>
           <div className={styles.modal__block}>
             <form className={styles.modal__form}>
-              <Link href="/music/main">
+              <Link href="/">
                 <div className={styles.modal__logo}>
                   <img src="/img/logo_modal.png" alt="logo" />
                 </div>

@@ -2,9 +2,9 @@ import Navbar from '@/components/Navbar/Navbar';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import Player from '@/components/Player/Player';
 import Track from '@/components/Track/Track';
-import styles from './page.module.css';
+import styles from '../page.module.css';
 
-export default function Home() {
+export default function PlaylistDay() {
   const tracks = [
     {
       name: 'Guilt',
@@ -56,7 +56,7 @@ export default function Home() {
                 name="search"
               />
             </div>
-            <h2 className={styles.centerblock__h2}>Треки</h2>
+            <h2 className={styles.centerblock__h2}>Плейлист дня</h2>
             <div className={styles.centerblock__filter}>
               <div className={styles.filter__title}>Искать по:</div>
               <div className={styles.filter__button}>исполнителю</div>

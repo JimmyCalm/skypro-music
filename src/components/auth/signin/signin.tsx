@@ -9,11 +9,11 @@ export default function Signin() {
         <div className={styles.containerEnter}>
           <div className={styles.modal__block}>
             <form className={styles.modal__form}>
-              <a href="/music/main">
+              <Link href="/">
                 <div className={styles.modal__logo}>
                   <img src="/img/logo_modal.png" alt="logo" />
                 </div>
-              </a>
+              </Link>
               <input
                 className={classNames(styles.modal__input, styles.login)}
                 type="text"
@@ -28,7 +28,7 @@ export default function Signin() {
               />
               <div className={styles.errorContainer}>{/*Блок для ошибок*/}</div>
               <button className={styles.modal__btnEnter}>Войти</button>
-              <Link href={''} className={styles.modal__btnSignup}>
+              <Link href="/signup" className={styles.modal__btnSignup}>
                 Зарегистрироваться
               </Link>
             </form>
