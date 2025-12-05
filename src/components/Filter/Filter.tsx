@@ -25,19 +25,7 @@ export default function Filter({
     onToggle();
   };
 
-  const getDisplayTitle = () => {
-    if (!selectedItem) {
-      return title; // Если ничего не выбрано, показываем стандартный заголовок
-    }
-
-    if (displayMode === 'nameOnly') {
-      return selectedItem;
-    } else {
-      return selectedItem;
-    }
-  };
-
-  const displayTitle = getDisplayTitle();
+  const displayTitle = title;
 
   return (
     <div className={styles.filter__wrapper}>
