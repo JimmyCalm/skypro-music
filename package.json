@@ -10,10 +10,13 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\""
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.10.1",
+    "@types/react-redux": "^7.1.34",
     "classnames": "^2.5.1",
     "next": "16.0.1",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^16.0.1",

@@ -1,0 +1,87 @@
+.filter__wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.filter__button {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  border: 1px solid #ffffff;
+  border-radius: 60px;
+  padding: 6px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.filter__button:hover {
+  border-color: #d9b6ff;
+  color: #d9b6ff;
+}
+
+.filter__button.active {
+  border-color: #ad61ff;
+  color: #ad61ff;
+  background: rgba(173, 97, 255, 0.1);
+}
+
+.filter__popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 10px;
+  background: #313131;
+  border-radius: 12px;
+  padding: 34px;
+  z-index: 10;
+  min-width: 248px;
+}
+
+.filter__list {
+  color: white;
+  display: flex;
+  gap: 28px;
+  height: max-content;
+  max-height: 237px;
+  overflow-y: auto;
+  flex-direction: column;
+  width: max-content;
+  max-width: 248px;
+}
+
+.filter__list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.filter__list::-webkit-scrollbar-track {
+  background-color: rgba(75, 73, 73, 1);
+}
+
+.filter__list::-webkit-scrollbar-thumb {
+  background-color: white;
+  border-radius: 2px;
+}
+
+.filter__item {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 24px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.filter__item:hover {
+  color: #b672ff;
+  text-decoration: underline;
+}
+
+.filter__item_selected {
+  color: #b672ff !important;
+  font-weight: 600;
+}

@@ -30,6 +30,7 @@
   justify-content: space-between;
   cursor: pointer;
   margin-top: 46px;
+  margin-bottom: 28px;
 }
 
 .burger__line {
@@ -81,7 +82,7 @@
 }
 
 .menu__item {
-  padding: 8px 0;
+  padding: 6px 0;
   margin-bottom: 12px;
 }
 
