@@ -37,16 +37,44 @@ export default function Home() {
     setActiveFilter(activeFilter === filterType ? null : filterType);
   };
 
-  const handleAuthorSelect = (author: string) => {
-    setSelectedAuthor(author === selectedAuthor ? null : author);
+  // Обработчики для каждого фильтра
+  const handleAuthorSelect = (author: string | null) => {
+    // Если кликаем на уже выбранного автора - снимаем выбор
+    if (author === selectedAuthor) {
+      setSelectedAuthor(null);
+    } else {
+      // Сбрасываем все остальные фильтры
+      setSelectedYear(null);
+      setSelectedGenre(null);
+      setSelectedAuthor(author);
+    }
   };
 
-  const handleYearSelect = (year: string) => {
-    setSelectedYear(year === 'по умолчанию' ? null : year);
+  const handleYearSelect = (year: string | null) => {
+    // Для года обрабатываем особый случай "по умолчанию"
+    const normalizedYear = year === 'по умолчанию' ? null : year;
+
+    // Если кликаем на уже выбранный год - снимаем выбор
+    if (normalizedYear === selectedYear) {
+      setSelectedYear(null);
+    } else {
+      // Сбрасываем все остальные фильтры
+      setSelectedAuthor(null);
+      setSelectedGenre(null);
+      setSelectedYear(normalizedYear);
+    }
   };
 
-  const handleGenreSelect = (genre: string) => {
-    setSelectedGenre(genre === selectedGenre ? null : genre);
+  const handleGenreSelect = (genre: string | null) => {
+    // Если кликаем на уже выбранный жанр - снимаем выбор
+    if (genre === selectedGenre) {
+      setSelectedGenre(null);
+    } else {
+      // Сбрасываем все остальные фильтры
+      setSelectedAuthor(null);
+      setSelectedYear(null);
+      setSelectedGenre(genre);
+    }
   };
 
   const tracks = [
