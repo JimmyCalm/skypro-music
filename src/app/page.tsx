@@ -177,13 +177,15 @@ export default function Home() {
                 </div>
               </div>
               <div className={styles.content__playlist}>
-                {tracks.map((track, index) => (
+                {data.map((track) => (
                   <Track
-                    key={index}
+                    key={track._id}
+                    _id={track._id}
                     name={track.name}
                     author={track.author}
                     album={track.album}
-                    duration={track.duration}
+                    duration_in_seconds={track.duration_in_seconds}
+                    track_file={track.track_file}
                   />
                 ))}
               </div>
