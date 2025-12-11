@@ -1,6 +1,7 @@
+// src/components/Player/Player.tsx
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import styles from './Player.module.css';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { setIsPlaying, togglePlay } from '@/store/features/trackSlice';
@@ -9,31 +10,76 @@ export default function Player() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const dispatch = useAppDispatch();
   const { currentTrack, isPlaying } = useAppSelector((state) => state.tracks);
+  const [isReadyToPlay, setIsReadyToPlay] = useState(false);
 
   // Управление воспроизведением при изменении isPlaying
   useEffect(() => {
     if (!audioRef.current) return;
 
     if (isPlaying) {
-      audioRef.current.play();
+      // Воспроизводим только если аудио готово
+      if (isReadyToPlay) {
+        audioRef.current.play().catch((e) => {
+          console.error('Error playing audio:', e);
+          // Если воспроизведение не удалось, сбрасываем состояние
+          dispatch(setIsPlaying(false));
+        });
+      }
     } else {
       audioRef.current.pause();
     }
-  }, [isPlaying]);
+  }, [isPlaying, isReadyToPlay, dispatch]);
 
   // Обновление источника аудио при смене трека
   useEffect(() => {
-    if (!audioRef.current || !currentTrack) return;
-
-    audioRef.current.src = currentTrack.track_file;
-
-    // Если трек сменился, начинаем воспроизведение
-    if (isPlaying) {
-      audioRef.current
-        .play()
-        .catch((e) => console.error('Error playing audio:', e));
+    if (!audioRef.current || !currentTrack) {
+      setIsReadyToPlay(false);
+      return;
     }
-  }, [currentTrack]);
+
+    const audio = audioRef.current;
+
+    // Сбрасываем флаг готовности
+    setIsReadyToPlay(false);
+
+    // Настраиваем слушатель события готовности аудио
+    const handleCanPlay = () => {
+      setIsReadyToPlay(true);
+
+      // Автовоспроизведение только если isPlaying равно true
+      if (isPlaying) {
+        audio.play().catch((e) => {
+          console.error('Error playing audio:', e);
+          dispatch(setIsPlaying(false));
+        });
+      }
+    };
+
+    const handleError = (e: Event) => {
+      console.error('Audio loading error:', e);
+      dispatch(setIsPlaying(false));
+      setIsReadyToPlay(false);
+    };
+
+    // Удаляем предыдущие слушатели событий
+    audio.removeEventListener('canplay', handleCanPlay);
+    audio.removeEventListener('error', handleError);
+
+    // Добавляем слушатели событий
+    audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('error', handleError);
+
+    // Устанавливаем новый источник
+    audio.src = currentTrack.track_file;
+    // Принудительно начинаем загрузку
+    audio.load();
+
+    // Функция очистки
+    return () => {
+      audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('error', handleError);
+    };
+  }, [currentTrack, dispatch]); // Убрали isPlaying из зависимостей
 
   const handlePlayPause = () => {
     dispatch(togglePlay());
@@ -41,13 +87,6 @@ export default function Player() {
 
   const handleNotImplemented = () => {
     alert('Еще не реализовано');
-  };
-
-  // Форматирование времени
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   return (
