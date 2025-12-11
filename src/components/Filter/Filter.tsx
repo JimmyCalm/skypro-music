@@ -7,7 +7,7 @@ interface FilterProps {
   isOpen: boolean;
   selectedItem: string | null;
   onToggle: () => void;
-  onItemSelect?: (item: string) => void;
+  onItemSelect?: (item: string | null) => void;
   displayMode?: 'nameOnly' | 'titleOnly';
 }
 
@@ -21,7 +21,15 @@ export default function Filter({
   displayMode = 'nameOnly',
 }: FilterProps) {
   const handleItemClick = (item: string) => {
-    onItemSelect?.(item);
+    if (onItemSelect) {
+      // Если кликаем на уже выбранный элемент - снимаем выбор
+      // Иначе выбираем новый элемент
+      if (item === selectedItem) {
+        onItemSelect(null);
+      } else {
+        onItemSelect(item);
+      }
+    }
     onToggle();
   };
 

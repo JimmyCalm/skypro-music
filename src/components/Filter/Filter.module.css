@@ -17,6 +17,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 200px;
+  color: #ffffff; /* Добавляем цвет текста, чтобы он был виден */
 }
 
 .filter__button:hover {
@@ -74,6 +75,7 @@
   line-height: 24px;
   cursor: pointer;
   transition: color 0.3s ease;
+  color: #ffffff; /* Обеспечиваем видимость текста в списке */
 }
 
 .filter__item:hover {
