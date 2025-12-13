@@ -50,7 +50,7 @@ export default function Track({
       album,
       duration_in_seconds,
       track_file,
-      release_date,
+      release_date: release_date || '',
       genre,
       logo,
       stared_user,
