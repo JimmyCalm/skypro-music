@@ -8,6 +8,9 @@ import Filter from '@/components/Filter/Filter';
 import { data } from '@data';
 import { useState, useMemo } from 'react';
 import styles from './page.module.css';
+import { setCurrentPlaylist } from '@/store/features/trackSlice';
+import { useAppDispatch } from '@/store/store';
+import { useEffect } from 'react';
 
 type FilterType = 'author' | 'year' | 'genre' | null;
 
@@ -16,6 +19,12 @@ export default function Home() {
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+
+  // Устанавливаем плейлист при монтировании
+  useEffect(() => {
+    dispatch(setCurrentPlaylist(data));
+  }, [dispatch]);
 
   // Получаем уникальные данные из моковых данных
   const filterData = useMemo(() => {

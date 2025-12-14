@@ -1,27 +1,58 @@
-// src/components/Player/Player.tsx
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import styles from './Player.module.css';
 import { useAppDispatch, useAppSelector } from '@/store/store';
-import { setIsPlaying, togglePlay } from '@/store/features/trackSlice';
+import {
+  setIsPlaying,
+  togglePlay,
+  toggleShuffle,
+  toggleLoop,
+  setVolume,
+  setCurrentTime,
+  setDuration,
+  nextTrack,
+  prevTrack,
+} from '@/store/features/trackSlice';
 
 export default function Player() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const dispatch = useAppDispatch();
-  const { currentTrack, isPlaying } = useAppSelector((state) => state.tracks);
+  const progressContainerRef = useRef<HTMLDivElement>(null);
   const [isReadyToPlay, setIsReadyToPlay] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dispatch = useAppDispatch();
+  const {
+    currentTrack,
+    isPlaying,
+    isShuffled,
+    isLoop,
+    volume,
+    currentTime,
+    duration,
+  } = useAppSelector((state) => state.tracks);
+
+  // Инициализация громкости
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, []);
+
+  // Управление громкостью
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   // Управление воспроизведением при изменении isPlaying
   useEffect(() => {
     if (!audioRef.current) return;
 
     if (isPlaying) {
-      // Воспроизводим только если аудио готово
       if (isReadyToPlay) {
         audioRef.current.play().catch((e) => {
           console.error('Error playing audio:', e);
-          // Если воспроизведение не удалось, сбрасываем состояние
           dispatch(setIsPlaying(false));
         });
       }
@@ -39,19 +70,30 @@ export default function Player() {
 
     const audio = audioRef.current;
 
-    // Сбрасываем флаг готовности
-    setIsReadyToPlay(false);
-
-    // Настраиваем слушатель события готовности аудио
     const handleCanPlay = () => {
       setIsReadyToPlay(true);
+      dispatch(setDuration(audio.duration));
 
-      // Автовоспроизведение только если isPlaying равно true
       if (isPlaying) {
         audio.play().catch((e) => {
           console.error('Error playing audio:', e);
           dispatch(setIsPlaying(false));
         });
+      }
+    };
+
+    const handleTimeUpdate = () => {
+      if (!isDragging) {
+        dispatch(setCurrentTime(audio.currentTime));
+      }
+    };
+
+    const handleEnded = () => {
+      if (isLoop) {
+        audio.currentTime = 0;
+        audio.play();
+      } else {
+        dispatch(nextTrack());
       }
     };
 
@@ -61,49 +103,154 @@ export default function Player() {
       setIsReadyToPlay(false);
     };
 
-    // Удаляем предыдущие слушатели событий
+    // Удаляем предыдущие слушатели
     audio.removeEventListener('canplay', handleCanPlay);
+    audio.removeEventListener('timeupdate', handleTimeUpdate);
+    audio.removeEventListener('ended', handleEnded);
     audio.removeEventListener('error', handleError);
 
-    // Добавляем слушатели событий
+    // Добавляем слушатели
     audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
     // Устанавливаем новый источник
     audio.src = currentTrack.track_file;
-    // Принудительно начинаем загрузку
+    audio.loop = isLoop;
     audio.load();
 
     // Функция очистки
     return () => {
       audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [currentTrack, dispatch]); // Убрали isPlaying из зависимостей
+  }, [currentTrack, dispatch, isLoop, isDragging]);
 
   const handlePlayPause = () => {
     dispatch(togglePlay());
   };
 
+  const handleNext = () => {
+    dispatch(nextTrack());
+  };
+
+  const handlePrev = () => {
+    dispatch(prevTrack());
+  };
+
+  const handleShuffle = () => {
+    dispatch(toggleShuffle());
+  };
+
+  const handleLoop = () => {
+    dispatch(toggleLoop());
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(e.target.value);
+    dispatch(setVolume(newVolume));
+  };
+
+  const calculateNewTime = (clientX: number) => {
+    if (!progressContainerRef.current) return 0;
+    const container = progressContainerRef.current;
+    const rect = container.getBoundingClientRect();
+    const clickPosition = clientX - rect.left;
+    const containerWidth = rect.width;
+    const percentage = Math.min(Math.max(clickPosition / containerWidth, 0), 1);
+    return percentage * duration;
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || duration === 0) return;
+
+    const newTime = calculateNewTime(e.clientX);
+    audioRef.current.currentTime = newTime;
+    dispatch(setCurrentTime(newTime));
+  };
+
+  const handleProgressMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || !audioRef.current || duration === 0) return;
+
+      const newTime = calculateNewTime(e.clientX);
+      audioRef.current.currentTime = newTime;
+      dispatch(setCurrentTime(newTime));
+    },
+    [isDragging, duration, dispatch],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  }, [handleMouseMove]);
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
   const handleNotImplemented = () => {
     alert('Еще не реализовано');
   };
 
+  // Форматирование времени
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  // Рассчитываем процент прогресса
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
   return (
     <>
-      {/* Скрытый аудио элемент */}
       <audio ref={audioRef} />
 
       <div className={styles.bar}>
         <div className={styles.bar__content}>
-          <div className={styles.bar__playerProgress}></div>
+          {/* Время трека справа сверху */}
+          <div className={styles.timeDisplay}>
+            <span className={styles.currentTime}>
+              {formatTime(currentTime)}
+            </span>
+            <span className={styles.timeSeparator}> / </span>
+            <span className={styles.totalTime}>{formatTime(duration)}</span>
+          </div>
+
+          {/* Полоса прогресса трека - кликабельная */}
+          <div
+            className={styles.progressContainer}
+            ref={progressContainerRef}
+            onClick={handleProgressClick}
+            onMouseDown={handleProgressMouseDown}
+          >
+            <div
+              className={styles.progressBar}
+              style={{ width: `${progressPercent}%` }}
+            >
+              <div className={styles.progressThumb}></div>
+            </div>
+          </div>
+
           <div className={styles.bar__playerBlock}>
             <div className={styles.bar__player}>
               <div className={styles.player__controls}>
-                <div
-                  className={styles.player__btnPrev}
-                  onClick={handleNotImplemented}
-                >
+                <div className={styles.player__btnPrev} onClick={handlePrev}>
                   <svg className={styles.player__btnPrevSvg}>
                     <use xlinkHref="/img/icon/sprite.svg#icon-prev"></use>
                   </svg>
@@ -122,25 +269,22 @@ export default function Player() {
                     ></use>
                   </svg>
                 </div>
-                <div
-                  className={styles.player__btnNext}
-                  onClick={handleNotImplemented}
-                >
+                <div className={styles.player__btnNext} onClick={handleNext}>
                   <svg className={styles.player__btnNextSvg}>
                     <use xlinkHref="/img/icon/sprite.svg#icon-next"></use>
                   </svg>
                 </div>
                 <div
-                  className={`${styles.player__btnRepeat} ${styles.btnIcon}`}
-                  onClick={handleNotImplemented}
+                  className={`${styles.player__btnRepeat} ${styles.btnIcon} ${isLoop ? styles.active : ''}`}
+                  onClick={handleLoop}
                 >
                   <svg className={styles.player__btnRepeatSvg}>
                     <use xlinkHref="/img/icon/sprite.svg#icon-repeat"></use>
                   </svg>
                 </div>
                 <div
-                  className={`${styles.player__btnShuffle} ${styles.btnIcon}`}
-                  onClick={handleNotImplemented}
+                  className={`${styles.player__btnShuffle} ${styles.btnIcon} ${isShuffled ? styles.active : ''}`}
+                  onClick={handleShuffle}
                 >
                   <svg className={styles.player__btnShuffleSvg}>
                     <use xlinkHref="/img/icon/sprite.svg#icon-shuffle"></use>
@@ -204,7 +348,11 @@ export default function Player() {
                   <input
                     className={`${styles.volume__progressLine} ${styles.btn}`}
                     type="range"
-                    name="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={volume}
+                    onChange={handleVolumeChange}
                   />
                 </div>
               </div>
