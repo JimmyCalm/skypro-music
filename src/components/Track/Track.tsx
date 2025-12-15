@@ -37,8 +37,9 @@ export default function Track({
   const isCurrentTrack = currentTrack?._id === _id;
 
   const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds === undefined) return '0:00';
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 

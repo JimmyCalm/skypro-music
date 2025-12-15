@@ -13,6 +13,7 @@ import {
   setDuration,
   nextTrack,
   prevTrack,
+  resetCurrentTime,
 } from '@/store/features/trackSlice';
 
 export default function Player() {
@@ -90,10 +91,23 @@ export default function Player() {
 
     const handleEnded = () => {
       if (isLoop) {
+        // Сбрасываем время и начинаем сначала
         audio.currentTime = 0;
-        audio.play();
+        dispatch(resetCurrentTime());
+        audio.play().catch((e) => {
+          console.error('Error playing audio after loop:', e);
+        });
       } else {
         dispatch(nextTrack());
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (audioRef.current) {
+        const audioDuration = audioRef.current.duration;
+        if (!isNaN(audioDuration) && isFinite(audioDuration)) {
+          dispatch(setDuration(audioDuration));
+        }
       }
     };
 
@@ -110,6 +124,7 @@ export default function Player() {
     audio.removeEventListener('error', handleError);
 
     // Добавляем слушатели
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('ended', handleEnded);
@@ -126,8 +141,30 @@ export default function Player() {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
   }, [currentTrack, dispatch, isLoop, isDragging]);
+
+  useEffect(() => {
+    if (!audioRef.current || !isLoop) return;
+
+    const audio = audioRef.current;
+
+    const handleTimeUpdateForLoop = () => {
+      // Если трек закончился и loop включен, начинаем сначала
+      if (audio.currentTime >= audio.duration - 0.5) {
+        // Небольшой запас
+        audio.currentTime = 0;
+        dispatch(resetCurrentTime());
+      }
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdateForLoop);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdateForLoop);
+    };
+  }, [isLoop, dispatch]);
 
   const handlePlayPause = () => {
     dispatch(togglePlay());
@@ -208,7 +245,8 @@ export default function Player() {
 
   // Форматирование времени
   const formatTime = (seconds: number) => {
-    if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+    if (isNaN(seconds) || !isFinite(seconds) || seconds === undefined)
+      return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
