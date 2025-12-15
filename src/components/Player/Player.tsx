@@ -132,7 +132,7 @@ export default function Player() {
 
     // Устанавливаем новый источник
     audio.src = currentTrack.track_file;
-    audio.loop = isLoop;
+    audio.loop = false;
     audio.load();
 
     // Функция очистки
@@ -143,28 +143,12 @@ export default function Player() {
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, [currentTrack, dispatch, isLoop, isDragging]);
+  }, [currentTrack, dispatch, isDragging, isPlaying]);
 
   useEffect(() => {
-    if (!audioRef.current || !isLoop) return;
-
-    const audio = audioRef.current;
-
-    const handleTimeUpdateForLoop = () => {
-      // Если трек закончился и loop включен, начинаем сначала
-      if (audio.currentTime >= audio.duration - 0.5) {
-        // Небольшой запас
-        audio.currentTime = 0;
-        dispatch(resetCurrentTime());
-      }
-    };
-
-    audio.addEventListener('timeupdate', handleTimeUpdateForLoop);
-
-    return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdateForLoop);
-    };
-  }, [isLoop, dispatch]);
+    if (!audioRef.current) return;
+    audioRef.current.loop = isLoop;
+  }, [isLoop]);
 
   const handlePlayPause = () => {
     dispatch(togglePlay());
