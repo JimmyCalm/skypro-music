@@ -1,105 +1,73 @@
-import Navbar from '@/components/Navbar/Navbar';
-import Sidebar from '@/components/Sidebar/Sidebar';
-import Player from '@/components/Player/Player';
-import Track from '@/components/Track/Track';
-import styles from '../page.module.css';
+import { Suspense } from 'react';
+import { getSelectionById, getAllTracks, isApiError } from '@/api';
+import { TrackType } from '@/sharedTypes/types';
+import SelectionContent from '@/app/SelectionContent';
+import Loading from '@/app/loading';
+import ErrorComponent from '@/app/error';
 
-export default function IndieCharge() {
-  const tracks = [
-    {
-      name: 'Guilt',
-      author: 'Nero',
-      album: 'Welcome Reality',
-      duration: '4:44',
-    },
-    {
-      name: 'Elektro',
-      author: 'Dynoro, Outwork, Mr. Gee',
-      album: 'Elektro',
-      duration: '2:22',
-    },
-    {
-      name: "I'm Fire",
-      author: 'Ali Bakgor',
-      album: "I'm Fire",
-      duration: '2:22',
-    },
-    {
-      name: 'Non Stop',
-      author: 'Стоункат, Psychopath',
-      album: 'Non Stop',
-      duration: '4:12',
-    },
-    {
-      name: 'Run Run',
-      author: 'Jaded, Will Clarke, AR/CO',
-      album: 'Run Run',
-      duration: '2:54',
-    },
-  ];
+// ID подборки "Инди заряд" - нужно узнать из API
+const SELECTION_ID = 3; // Замените на реальный ID
+
+async function fetchSelectionTracks(): Promise<TrackType[]> {
+  try {
+    // Вариант 1: Получаем подборку по ID
+    const selection = await getSelectionById(SELECTION_ID);
+
+    if (isApiError(selection)) {
+      console.error('Selection error:', selection.message);
+
+      // Вариант 2: Если подборка не найдена, используем фильтрацию
+      const allTracks = await getAllTracks();
+      if (isApiError(allTracks)) {
+        throw new Error(allTracks.message);
+      }
+
+      // Фильтруем треки по жанру "Инди" или другим критериям
+      return allTracks.filter((track) =>
+        track.genre.some((g) => g.toLowerCase().includes('инди')),
+      );
+    }
+
+    // Если подборка содержит треки
+    if (selection.tracks && Array.isArray(selection.tracks)) {
+      return selection.tracks;
+    }
+
+    // Если треков нет, возвращаем пустой массив
+    return [];
+  } catch (error) {
+    console.error('Error fetching selection:', error);
+    throw error;
+  }
+}
+
+export default async function IndieChargePage() {
+  let tracks: TrackType[] = [];
+  let error: string | null = null;
+
+  try {
+    tracks = await fetchSelectionTracks();
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Ошибка загрузки подборки';
+  }
+
+  if (error) {
+    // Можно использовать ErrorComponent или свой fallback
+    return <div>Ошибка: {error}</div>;
+  }
+
+  // Получаем данные для фильтров
+  const genres = [...new Set(tracks.flatMap((t) => t.genre))].filter(Boolean);
+  const authors = [...new Set(tracks.map((t) => t.author))].filter(Boolean);
+  const years = ['по умолчанию', 'сначала новые', 'сначала старые'];
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.container}>
-        <main className={styles.main}>
-          <Navbar />
-
-          <div className={styles.centerblock}>
-            <div className={styles.centerblock__search}>
-              <svg className={styles.search__svg}>
-                <use xlinkHref="/img/icon/sprite.svg#icon-search"></use>
-              </svg>
-              <input
-                className={styles.search__text}
-                type="search"
-                placeholder="Поиск"
-                name="search"
-              />
-            </div>
-            <h2 className={styles.centerblock__h2}>Инди заряд</h2>
-            <div className={styles.centerblock__filter}>
-              <div className={styles.filter__title}>Искать по:</div>
-              <div className={styles.filter__button}>исполнителю</div>
-              <div className={styles.filter__button}>году выпуска</div>
-              <div className={styles.filter__button}>жанру</div>
-            </div>
-            <div className={styles.centerblock__content}>
-              <div className={styles.content__title}>
-                <div className={`${styles.playlistTitle__col} ${styles.col01}`}>
-                  Трек
-                </div>
-                <div className={`${styles.playlistTitle__col} ${styles.col02}`}>
-                  Исполнитель
-                </div>
-                <div className={`${styles.playlistTitle__col} ${styles.col03}`}>
-                  Альбом
-                </div>
-                <div className={`${styles.playlistTitle__col} ${styles.col04}`}>
-                  <svg className={styles.playlistTitle__svg}>
-                    <use xlinkHref="/img/icon/sprite.svg#icon-watch"></use>
-                  </svg>
-                </div>
-              </div>
-              <div className={styles.content__playlist}>
-                {tracks.map((track, index) => (
-                  <Track
-                    key={index}
-                    name={track.name}
-                    author={track.author}
-                    album={track.album}
-                    duration={track.duration}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <Sidebar />
-        </main>
-
-        <Player />
-        <footer className={styles.footer}></footer>
-      </div>
-    </div>
+    <Suspense fallback={<Loading />}>
+      <SelectionContent
+        initialTracks={tracks}
+        filterData={{ genres, authors, years }}
+        pageTitle="Инди заряд"
+      />
+    </Suspense>
   );
 }
