@@ -1,4 +1,3 @@
-// components/auth/signup/signup.tsx
 'use client';
 
 import { useState } from 'react';
@@ -35,6 +34,16 @@ export default function SignUp() {
       return;
     }
 
+    if (username.length < 3) {
+      setError('Имя пользователя должно содержать минимум 3 символа');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setError('Введите корректный email');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -42,16 +51,21 @@ export default function SignUp() {
       const signUpResult = await signUp(email, password, username);
 
       if (isApiError(signUpResult)) {
-        setError(signUpResult.message);
+        // Специфичная обработка ошибок из API
+        if (signUpResult.status === 403) {
+          setError('Пользователь с таким email уже существует');
+        } else {
+          setError(signUpResult.message || 'Ошибка регистрации');
+        }
         return;
       }
 
-      // 2. Автоматический вход после регистрации
+      // 2. После успешной регистрации сразу логиним пользователя
       const authResult = await signIn(email, password);
 
       if (isApiError(authResult)) {
         setError(
-          'Регистрация успешна, но вход не удался: ' + authResult.message,
+          'Регистрация успешна, но вход не удался. Попробуйте войти вручную.',
         );
         return;
       }
@@ -60,7 +74,7 @@ export default function SignUp() {
       const tokenResult = await getTokens(email, password);
 
       if (isApiError(tokenResult)) {
-        setError(tokenResult.message);
+        setError(tokenResult.message || 'Ошибка получения токенов');
         return;
       }
 
@@ -81,8 +95,20 @@ export default function SignUp() {
       // 6. Перенаправляем на главную
       router.push('/');
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Произошла ошибка');
+    } catch (err: any) {
+      console.error('Sign up error:', err);
+
+      // Обработка 412 ошибки
+      if (err?.response?.status === 412 || err?.status === 412) {
+        setError('Требуется повторная авторизация');
+        localStorage.clear();
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Произошла ошибка при регистрации',
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -109,6 +135,7 @@ export default function SignUp() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isLoading}
+                minLength={3}
               />
 
               <input
@@ -126,11 +153,12 @@ export default function SignUp() {
                 className={styles.modal__input}
                 type="password"
                 name="password"
-                placeholder="Пароль"
+                placeholder="Пароль (минимум 6 символов)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                minLength={6}
               />
 
               <input
@@ -142,6 +170,7 @@ export default function SignUp() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                minLength={6}
               />
 
               {error && (

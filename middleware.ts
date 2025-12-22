@@ -1,28 +1,36 @@
-// middleware.ts (в корне проекта)
+// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Пути, которые требуют авторизации
-  const protectedPaths = ['/favorites', '/profile'];
-  const { pathname } = request.nextUrl;
+  // Получаем токен из cookies
+  const accessToken = request.cookies.get('accessToken')?.value;
 
-  // Проверяем, защищен ли путь
-  const isProtectedPath = protectedPaths.some((path) =>
-    pathname.startsWith(path),
+  // Защищенные маршруты
+  const protectedRoutes = ['/favorites', '/profile'];
+
+  // Проверяем, является ли текущий путь защищенным
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route),
   );
 
-  if (isProtectedPath) {
-    const accessToken = request.cookies.get('accessToken')?.value;
+  // Если маршрут защищенный и нет токена, перенаправляем на страницу входа
+  if (isProtectedRoute && !accessToken) {
+    const signInUrl = new URL('/signin', request.url);
+    // Добавляем returnUrl для возможности вернуться после авторизации
+    signInUrl.searchParams.set('returnUrl', request.nextUrl.pathname);
+    return NextResponse.redirect(signInUrl);
+  }
 
-    if (!accessToken) {
-      // Перенаправляем на страницу входа
-      const url = new URL('/signin', request.url);
-      url.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(url);
-    }
+  // Если пользователь уже авторизован и пытается зайти на страницы входа/регистрации,
+  // перенаправляем на главную
+  const authRoutes = ['/signin', '/signup'];
+  const isAuthRoute = authRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route),
+  );
 
-    // TODO: Проверять валидность токена через API
+  if (isAuthRoute && accessToken) {
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return NextResponse.next();
@@ -31,13 +39,12 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
+     * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],
 };

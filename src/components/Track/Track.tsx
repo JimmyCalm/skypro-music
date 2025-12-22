@@ -1,16 +1,14 @@
-// components/Track/Track.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './Track.module.css';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { playTrack } from '@/store/features/trackSlice';
 import { TrackType } from '@/sharedTypes/types';
 import { addToFavorites, removeFromFavorites, isApiError } from '@/api';
 
-interface TrackProps extends TrackType {
-  // Все поля уже определены в TrackType
-}
+interface TrackProps extends TrackType {}
 
 export default function Track({
   _id,
@@ -25,22 +23,48 @@ export default function Track({
   stared_user = [],
 }: TrackProps) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { currentTrack, isPlaying } = useAppSelector((state) => state.tracks);
-  const [isFavorite, setIsFavorite] = useState(
-    Array.isArray(stared_user) && stared_user.length > 0,
-  );
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const isCurrentTrack = currentTrack?._id === _id;
 
+  // Инициализируем состояние избранного
+  useEffect(() => {
+    if (Array.isArray(stared_user) && stared_user.length > 0) {
+      // Проверяем, есть ли текущий пользователь в stared_user
+      if (user && user._id) {
+        const userInFavorites = stared_user.some(
+          (userItem: any) =>
+            (typeof userItem === 'object' && userItem?._id === user._id) ||
+            userItem === user._id,
+        );
+        setIsFavorite(userInFavorites);
+      } else {
+        // Если пользователь не авторизован, просто проверяем наличие любых лайков
+        setIsFavorite(stared_user.length > 0);
+      }
+    } else {
+      setIsFavorite(false);
+    }
+  }, [stared_user, user]);
+
   const formatTime = (seconds: number) => {
-    if (isNaN(seconds) || seconds === undefined) return '0:00';
+    if (isNaN(seconds) || seconds === undefined || seconds === null)
+      return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const handlePlayClick = () => {
+  const handlePlayClick = (e: React.MouseEvent) => {
+    // Не запускаем воспроизведение если кликнули на кнопку избранного
+    if ((e.target as HTMLElement).closest(`.${styles.track__favoriteBtn}`)) {
+      return;
+    }
+
     const trackData: TrackType = {
       _id,
       name,
@@ -57,7 +81,14 @@ export default function Track({
   };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Предотвращаем запуск трека
+    e.stopPropagation();
+
+    // Проверяем авторизацию
+    if (!isAuthenticated) {
+      router.push('/signin');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -66,16 +97,27 @@ export default function Track({
         const result = await removeFromFavorites(_id);
         if (!isApiError(result)) {
           setIsFavorite(false);
+          console.log(`Трек ${name} удален из избранного`);
+        } else {
+          console.error('Ошибка удаления из избранного:', result.message);
+          // Показываем уведомление пользователю
+          alert(`Ошибка: ${result.message}`);
         }
       } else {
         // Добавляем в избранное
         const result = await addToFavorites(_id);
         if (!isApiError(result)) {
           setIsFavorite(true);
+          console.log(`Трек ${name} добавлен в избранное`);
+        } else {
+          console.error('Ошибка добавления в избранное:', result.message);
+          // Показываем уведомление пользователю
+          alert(`Ошибка: ${result.message}`);
         }
       }
     } catch (error) {
       console.error('Error updating favorites:', error);
+      alert('Произошла ошибка при обновлении избранного');
     } finally {
       setIsLoading(false);
     }
@@ -101,18 +143,29 @@ export default function Track({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          handlePlayClick();
+          const trackData: TrackType = {
+            _id,
+            name,
+            author,
+            album,
+            duration_in_seconds,
+            track_file,
+            release_date: release_date || '',
+            genre,
+            logo,
+            stared_user,
+          };
+          dispatch(playTrack(trackData));
         }
       }}
     >
       <div className={styles.playlist__track}>
-        {/* Колонка 1: Название трека */}
+        {/* Колонка 1: Название трека и кнопка избранного */}
         <div className={styles.track__title}>
           <div className={styles.track__titleImage}>
             <svg className={styles.track__titleSvg}>
               <use xlinkHref="/img/icon/sprite.svg#icon-note"></use>
             </svg>
-            {/* Индикатор текущего трека */}
             {isCurrentTrack && (
               <div
                 className={`${styles.track__currentIndicator} ${isPlaying ? styles.pulsing : ''}`}
@@ -122,8 +175,10 @@ export default function Track({
           <div className={styles.track__titleText}>
             <span className={styles.track__titleLink}>{name}</span>
             <div className={styles.track__meta}>
-              {genre.length > 0 && (
-                <span className={styles.track__genre}>{genre.join(', ')}</span>
+              {genre && genre.length > 0 && (
+                <span className={styles.track__genre}>
+                  {Array.isArray(genre) ? genre.join(', ') : genre}
+                </span>
               )}
               {release_date && (
                 <span className={styles.track__year}>
@@ -132,20 +187,8 @@ export default function Track({
               )}
             </div>
           </div>
-        </div>
 
-        {/* Колонка 2: Исполнитель */}
-        <div className={styles.track__author}>
-          <span className={styles.track__authorLink}>{author}</span>
-        </div>
-
-        {/* Колонка 3: Альбом */}
-        <div className={styles.track__album}>
-          <span className={styles.track__albumLink}>{album}</span>
-        </div>
-
-        {/* Колонка 4: Длительность и избранное */}
-        <div className={styles.track__time}>
+          {/* Кнопка добавления в избранное */}
           <button
             className={`${styles.track__favoriteBtn} ${isFavorite ? styles.active : ''}`}
             onClick={handleFavoriteClick}
@@ -153,18 +196,39 @@ export default function Track({
             aria-label={
               isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'
             }
+            title={
+              isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'
+            }
           >
             <svg className={styles.track__favoriteSvg}>
               <use
                 xlinkHref={
                   isFavorite
-                    ? '/img/icon/sprite.svg#icon-like-filled'
+                    ? '/img/icon/sprite.svg#icon-like-active'
                     : '/img/icon/sprite.svg#icon-like'
                 }
               ></use>
             </svg>
-            {isLoading && <span className={styles.favoriteLoading}></span>}
+            {isLoading && <div className={styles.loadingSpinner}></div>}
           </button>
+        </div>
+
+        {/* Колонка 2: Исполнитель */}
+        <div className={styles.track__author}>
+          <span className={styles.track__authorLink}>
+            {author || 'Неизвестен'}
+          </span>
+        </div>
+
+        {/* Колонка 3: Альбом */}
+        <div className={styles.track__album}>
+          <span className={styles.track__albumLink}>
+            {album || 'Без альбома'}
+          </span>
+        </div>
+
+        {/* Колонка 4: Длительность */}
+        <div className={styles.track__time}>
           <span className={styles.track__timeText}>
             {formatTime(duration_in_seconds)}
           </span>

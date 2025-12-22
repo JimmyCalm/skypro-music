@@ -1,12 +1,13 @@
 // Реэкспортируем все API функции для удобного импорта
 
+export { api } from './axios';
+
 // Auth
 export {
   signUp,
   signIn,
   getTokens,
   refreshToken,
-  validateToken,
   logout,
   isApiError,
 } from './auth';
@@ -19,7 +20,6 @@ export {
   addToFavorites,
   removeFromFavorites,
   createSelection,
-  isTrackArray,
 } from './tracks';
 
 // Selections

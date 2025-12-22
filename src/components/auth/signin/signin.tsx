@@ -1,4 +1,3 @@
-// components/auth/signin/signin.tsx
 'use client';
 
 import { useState } from 'react';
@@ -7,7 +6,7 @@ import styles from './signin.module.css';
 import classNames from 'classnames';
 import Link from 'next/link';
 import { signIn, getTokens, isApiError } from '@/api';
-import { setUser } from '@/store/features/authSlice'; // Нужно создать этот slice
+import { setUser } from '@/store/features/authSlice';
 import { useAppDispatch } from '@/store/store';
 
 export default function Signin() {
@@ -24,11 +23,23 @@ export default function Signin() {
     setIsLoading(true);
 
     try {
-      // 1. Авторизация
+      // Очищаем старые токены
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+      }
+
+      // 1. Авторизация - используем правильный endpoint /user/login/
       const authResult = await signIn(email, password);
 
       if (isApiError(authResult)) {
-        setError(authResult.message);
+        // Проверяем специфичные ошибки
+        if (authResult.status === 401) {
+          setError('Неверный email или пароль');
+        } else {
+          setError(authResult.message);
+        }
         return;
       }
 
@@ -36,7 +47,7 @@ export default function Signin() {
       const tokenResult = await getTokens(email, password);
 
       if (isApiError(tokenResult)) {
-        setError(tokenResult.message);
+        setError(tokenResult.message || 'Ошибка получения токенов');
         return;
       }
 
@@ -57,8 +68,18 @@ export default function Signin() {
       // 5. Перенаправляем на главную
       router.push('/');
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Произошла ошибка');
+    } catch (err: any) {
+      console.error('Sign in error:', err);
+
+      // Обработка 412 ошибки
+      if (err?.response?.status === 412 || err?.status === 412) {
+        setError('Требуется повторная авторизация');
+        localStorage.clear();
+      } else {
+        setError(
+          err instanceof Error ? err.message : 'Произошла ошибка при входе',
+        );
+      }
     } finally {
       setIsLoading(false);
     }

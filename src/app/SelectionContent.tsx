@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import Layout from '@/components/Layout/Layout';
 import Track from '@/components/Track/Track';
 import Filter from '@/components/Filter/Filter';
 import { TrackType } from '@/sharedTypes/types';
@@ -42,7 +43,6 @@ export default function SelectionContent({
     dispatch(setCurrentPlaylist(initialTracks));
   }, [dispatch, initialTracks]);
 
-  // Логика фильтрации (аналогично HomeContent)
   const filteredTracks = useMemo(() => {
     let result = [...initialTracks];
 
@@ -79,23 +79,6 @@ export default function SelectionContent({
 
   return (
     <>
-      {/* Поиск */}
-      <div className={styles.centerblock__search}>
-        <svg className={styles.search__svg}>
-          <use xlinkHref="/img/icon/sprite.svg#icon-search"></use>
-        </svg>
-        <input
-          className={styles.search__text}
-          type="search"
-          placeholder="Поиск"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-
-      {/* Заголовок */}
-      <h2 className={styles.centerblock__h2}>{pageTitle}</h2>
-
       {/* Фильтры */}
       <div className={styles.centerblock__filter}>
         <div className={styles.filter__title}>Искать по:</div>
@@ -147,7 +130,25 @@ export default function SelectionContent({
         <div className={styles.content__playlist}>
           {filteredTracks.length === 0 ? (
             <div className={styles.emptyState}>
-              <p>Треки не найдены</p>
+              <svg
+                className={styles.emptyState__icon}
+                width="64"
+                height="64"
+                viewBox="0 0 64 64"
+              >
+                <path
+                  d="M32 8C18.7 8 8 18.7 8 32s10.7 24 24 24 24-10.7 24-24S45.3 8 32 8zm0 44c-11 0-20-9-20-20s9-20 20-20 20 9 20 20-9 20-20 20z"
+                  fill="#696969"
+                />
+                <path
+                  d="M40.2 23.8L32 32l8.2 8.2c.8.8.8 2 0 2.8-.8.8-2 .8-2.8 0L32 37.7l-8.2 8.2c-.8.8-2 .8-2.8 0-.8-.8-.8-2 0-2.8L29.3 32l-8.2-8.2c-.8-.8-.8-2 0-2.8.8-.8 2-.8 2.8 0L32 26.3l8.2-8.2c.8-.8 2-.8 2.8 0 .8.8.8 2 0 2.8z"
+                  fill="#696969"
+                />
+              </svg>
+              <h3 className={styles.emptyState__title}>Треки не найдены</h3>
+              <p className={styles.emptyState__text}>
+                Попробуйте изменить параметры поиска
+              </p>
             </div>
           ) : (
             filteredTracks.map((track) => <Track key={track._id} {...track} />)
