@@ -132,8 +132,6 @@
   }
 }
 
-/* Добавьте эти стили к существующим */
-
 .track__favoriteBtn {
   background: none;
   border: none;
@@ -152,17 +150,18 @@
 }
 
 .track__favoriteBtn.active {
-  color: #ff6b6b;
+  color: #b672ff;
 }
 
 .track__favoriteSvg {
   width: 20px;
   height: 20px;
-  fill: currentColor;
+  fill: transparent;
+  stroke: #696969;
 }
 
 .track__favoriteBtn.active .track__favoriteSvg {
-  fill: #ff6b6b;
+  fill: #b672ff;
 }
 
 .loadingSpinner {

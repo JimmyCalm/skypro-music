@@ -1,4 +1,3 @@
-// utils/getSelections.ts
 import { getAllSelections } from '@/api';
 
 export async function getSelectionIdByName(

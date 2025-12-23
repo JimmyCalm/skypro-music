@@ -1,4 +1,3 @@
-// store/features/authSlice.ts (новый файл)
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { UserType } from '@/sharedTypes/types';
 

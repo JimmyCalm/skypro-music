@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import styles from './Track.module.css';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { playTrack } from '@/store/features/trackSlice';
-import { TrackType } from '@/sharedTypes/types';
+import { TrackType, UserType } from '@/sharedTypes/types';
 import { addToFavorites, removeFromFavorites, isApiError } from '@/api';
 
 interface TrackProps extends TrackType {}
@@ -36,11 +36,13 @@ export default function Track({
     if (Array.isArray(stared_user) && stared_user.length > 0) {
       // Проверяем, есть ли текущий пользователь в stared_user
       if (user && user._id) {
-        const userInFavorites = stared_user.some(
-          (userItem: any) =>
-            (typeof userItem === 'object' && userItem?._id === user._id) ||
-            userItem === user._id,
-        );
+        const userInFavorites = stared_user.some((userItem: unknown) => {
+          if (typeof userItem === 'object' && userItem !== null) {
+            const userObj = userItem as Record<string, unknown>;
+            return '_id' in userObj && userObj._id === user._id;
+          }
+          return userItem === user._id;
+        });
         setIsFavorite(userInFavorites);
       } else {
         // Если пользователь не авторизован, просто проверяем наличие любых лайков
@@ -100,7 +102,6 @@ export default function Track({
           console.log(`Трек ${name} удален из избранного`);
         } else {
           console.error('Ошибка удаления из избранного:', result.message);
-          // Показываем уведомление пользователю
           alert(`Ошибка: ${result.message}`);
         }
       } else {
@@ -111,7 +112,6 @@ export default function Track({
           console.log(`Трек ${name} добавлен в избранное`);
         } else {
           console.error('Ошибка добавления в избранное:', result.message);
-          // Показываем уведомление пользователю
           alert(`Ошибка: ${result.message}`);
         }
       }
@@ -187,30 +187,6 @@ export default function Track({
               )}
             </div>
           </div>
-
-          {/* Кнопка добавления в избранное */}
-          <button
-            className={`${styles.track__favoriteBtn} ${isFavorite ? styles.active : ''}`}
-            onClick={handleFavoriteClick}
-            disabled={isLoading}
-            aria-label={
-              isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'
-            }
-            title={
-              isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'
-            }
-          >
-            <svg className={styles.track__favoriteSvg}>
-              <use
-                xlinkHref={
-                  isFavorite
-                    ? '/img/icon/sprite.svg#icon-like-active'
-                    : '/img/icon/sprite.svg#icon-like'
-                }
-              ></use>
-            </svg>
-            {isLoading && <div className={styles.loadingSpinner}></div>}
-          </button>
         </div>
 
         {/* Колонка 2: Исполнитель */}
@@ -226,6 +202,28 @@ export default function Track({
             {album || 'Без альбома'}
           </span>
         </div>
+
+        {/* Кнопка добавления в избранное */}
+        <button
+          className={`${styles.track__favoriteBtn} ${isFavorite ? styles.active : ''}`}
+          onClick={handleFavoriteClick}
+          disabled={isLoading}
+          aria-label={
+            isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'
+          }
+          title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+        >
+          <svg className={styles.track__favoriteSvg}>
+            <use
+              xlinkHref={
+                isFavorite
+                  ? '/img/icon/sprite.svg#icon-like-active'
+                  : '/img/icon/sprite.svg#icon-like'
+              }
+            ></use>
+          </svg>
+          {isLoading && <div className={styles.loadingSpinner}></div>}
+        </button>
 
         {/* Колонка 4: Длительность */}
         <div className={styles.track__time}>

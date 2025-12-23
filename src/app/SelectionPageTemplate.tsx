@@ -1,7 +1,6 @@
-// app/SelectionPageTemplate.tsx
 import { Suspense } from 'react';
 import Layout from '@/components/Layout/Layout';
-import { getSelectionById, getAllTracks, isApiError } from '@/api';
+import { getAllTracks, isApiError } from '@/api';
 import { TrackType } from '@/sharedTypes/types';
 import SelectionContent from '@/app/SelectionContent';
 import { extractUniqueGenres, extractUniqueAuthors } from '@/api/selections';

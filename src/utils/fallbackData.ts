@@ -1,8 +1,7 @@
-// utils/fallbackData.ts
 import { TrackType } from '@/sharedTypes/types';
 
 // Импортируем данные из data.ts
-import { data as staticData } from '@/data';
+import { data as staticData } from '@data';
 
 // Функция для получения fallback данных
 export function getFallbackTracks(): TrackType[] {

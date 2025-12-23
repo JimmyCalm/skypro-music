@@ -57,6 +57,7 @@ export default function SignUp() {
         } else {
           setError(signUpResult.message || 'Ошибка регистрации');
         }
+        setIsLoading(false);
         return;
       }
 
@@ -67,6 +68,7 @@ export default function SignUp() {
         setError(
           'Регистрация успешна, но вход не удался. Попробуйте войти вручную.',
         );
+        setIsLoading(false);
         return;
       }
 
@@ -75,6 +77,7 @@ export default function SignUp() {
 
       if (isApiError(tokenResult)) {
         setError(tokenResult.message || 'Ошибка получения токенов');
+        setIsLoading(false);
         return;
       }
 
@@ -95,13 +98,22 @@ export default function SignUp() {
       // 6. Перенаправляем на главную
       router.push('/');
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Sign up error:', err);
 
-      // Обработка 412 ошибки
-      if (err?.response?.status === 412 || err?.status === 412) {
-        setError('Требуется повторная авторизация');
-        localStorage.clear();
+      // Типизируем ошибку
+      const typedError = err as Record<string, unknown>;
+
+      if (typedError.response || typedError.status === 412) {
+        const response = typedError.response as Record<string, unknown>;
+        const status = response?.status || typedError.status;
+
+        if (status === 412) {
+          setError('Требуется повторная авторизация');
+          localStorage.clear();
+        } else {
+          setError(`Ошибка ${status}. Попробуйте снова.`);
+        }
       } else {
         setError(
           err instanceof Error

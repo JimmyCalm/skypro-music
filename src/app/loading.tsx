@@ -1,4 +1,3 @@
-// app/loading.tsx
 'use client';
 
 import Layout from '@/components/Layout/Layout';

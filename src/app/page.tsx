@@ -1,4 +1,3 @@
-// app/page.tsx
 import { Suspense } from 'react';
 import { getAllTracks, isApiError } from '@/api/tracks';
 import { TrackType } from '@/sharedTypes/types';

@@ -30,7 +30,7 @@ export default function Signin() {
         localStorage.removeItem('user');
       }
 
-      // 1. Авторизация - используем правильный endpoint /user/login/
+      // 1. Авторизация
       const authResult = await signIn(email, password);
 
       if (isApiError(authResult)) {
@@ -40,6 +40,7 @@ export default function Signin() {
         } else {
           setError(authResult.message);
         }
+        setIsLoading(false);
         return;
       }
 
@@ -48,6 +49,7 @@ export default function Signin() {
 
       if (isApiError(tokenResult)) {
         setError(tokenResult.message || 'Ошибка получения токенов');
+        setIsLoading(false);
         return;
       }
 
@@ -68,13 +70,22 @@ export default function Signin() {
       // 5. Перенаправляем на главную
       router.push('/');
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Sign in error:', err);
 
-      // Обработка 412 ошибки
-      if (err?.response?.status === 412 || err?.status === 412) {
-        setError('Требуется повторная авторизация');
-        localStorage.clear();
+      // Типизируем ошибку
+      const typedError = err as Record<string, unknown>;
+
+      if (typedError.response || typedError.status === 412) {
+        const response = typedError.response as Record<string, unknown>;
+        const status = response?.status || typedError.status;
+
+        if (status === 412) {
+          setError('Требуется повторная авторизация');
+          localStorage.clear();
+        } else {
+          setError(`Ошибка ${status}. Попробуйте снова.`);
+        }
       } else {
         setError(
           err instanceof Error ? err.message : 'Произошла ошибка при входе',

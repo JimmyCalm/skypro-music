@@ -45,11 +45,13 @@ export default function Player() {
     if (currentTrack && Array.isArray(currentTrack.stared_user)) {
       const staredUsers = currentTrack.stared_user;
       if (user && user._id) {
-        const userInFavorites = staredUsers.some(
-          (userItem: any) =>
-            (typeof userItem === 'object' && userItem?._id === user._id) ||
-            userItem === user._id,
-        );
+        const userInFavorites = staredUsers.some((userItem: unknown) => {
+          if (typeof userItem === 'object' && userItem !== null) {
+            const userObj = userItem as Record<string, unknown>;
+            return '_id' in userObj && userObj._id === user._id;
+          }
+          return userItem === user._id;
+        });
         setIsFavorite(userInFavorites);
       } else {
         setIsFavorite(staredUsers.length > 0);

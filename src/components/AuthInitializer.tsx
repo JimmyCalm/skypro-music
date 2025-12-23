@@ -1,4 +1,3 @@
-// components/AuthInitializer.tsx
 'use client';
 
 import { useEffect } from 'react';

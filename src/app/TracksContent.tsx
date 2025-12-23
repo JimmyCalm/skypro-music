@@ -1,4 +1,3 @@
-// app/TracksContent.tsx
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -90,36 +89,6 @@ export default function TracksContent({
 
   return (
     <Layout pageTitle={pageTitle} showSearch>
-      {/* Информация о результатах */}
-      {/* {hasActiveFilters && (
-        <div className={styles.filterInfo}>
-          <span className={styles.filterInfo__text}>
-            Найдено треков: {filteredTracks.length}
-          </span>
-          {selectedAuthor && (
-            <span className={styles.filterInfo__tag}>
-              Исполнитель: {selectedAuthor}
-            </span>
-          )}
-          {selectedGenre && (
-            <span className={styles.filterInfo__tag}>
-              Жанр: {selectedGenre}
-            </span>
-          )}
-          {selectedYear && (
-            <span className={styles.filterInfo__tag}>
-              Сортировка: {selectedYear}
-            </span>
-          )}
-          <button
-            className={styles.resetFiltersBtn}
-            onClick={handleResetFilters}
-          >
-            Сбросить фильтры
-          </button>
-        </div>
-      )} */}
-
       {/* Фильтры */}
       <div className={styles.centerblock__filter}>
         <div className={styles.filter__title}>Искать по:</div>
