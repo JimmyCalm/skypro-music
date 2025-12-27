@@ -274,10 +274,7 @@ export async function getFavoriteTracks(): Promise<TrackType[] | ApiError> {
     return favoriteTracks;
   } catch (error: unknown) {
     console.warn('Error loading favorite tracks:', error);
-
-    // Для избранного возвращаем пустой массив при ошибке
-    // Пользователь увидит сообщение "У вас пока нет избранных треков"
-    return [];
+    return handleApiError(error);
   }
 }
 

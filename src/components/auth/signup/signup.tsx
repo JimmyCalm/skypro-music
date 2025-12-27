@@ -97,7 +97,6 @@ export default function SignUp() {
 
       // 6. Перенаправляем на главную
       router.push('/');
-      router.refresh();
     } catch (err: unknown) {
       console.error('Sign up error:', err);
 

@@ -69,7 +69,6 @@ export default function Signin() {
 
       // 5. Перенаправляем на главную
       router.push('/');
-      router.refresh();
     } catch (err: unknown) {
       console.error('Sign in error:', err);
 

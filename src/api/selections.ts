@@ -9,11 +9,16 @@ import {
 
 async function handleApiError(error: unknown): Promise<ApiError> {
   if (typeof error === 'object' && error !== null && 'response' in error) {
-    const err = error as { response?: { status?: number; data?: number } };
+    const err = error as {
+      response?: {
+        status?: number;
+        data?: { message?: string; detail?: string } | number;
+      };
+    };
     if (err.response?.data) {
       const message =
-        err.response.data?.message ||
-        err.response.data?.detail ||
+        (typeof err.response.data === 'object' && err.response.data?.message) ||
+        (typeof err.response.data === 'object' && err.response.data?.detail) ||
         `Ошибка ${err.response.status}`;
       return { message, status: err.response.status };
     }
