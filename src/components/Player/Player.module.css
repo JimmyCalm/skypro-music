@@ -427,3 +427,37 @@
   opacity: 1;
   transform: translate(50%, -50%) scale(1);
 }
+
+/* Добавьте эти стили к существующим */
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  position: absolute;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.trackPlay__like.active {
+  color: #ff6b6b;
+}
+
+.trackPlay__like.active .trackPlay__likeSvg {
+  fill: #ff6b6b;
+}
+
+.trackPlay__like:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

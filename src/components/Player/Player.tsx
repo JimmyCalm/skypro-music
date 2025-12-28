@@ -13,14 +13,21 @@ import {
   setDuration,
   nextTrack,
   prevTrack,
+  resetCurrentTime,
 } from '@/store/features/trackSlice';
+import { useRouter } from 'next/navigation';
+import { addToFavorites, removeFromFavorites, isApiError } from '@/api';
 
 export default function Player() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressContainerRef = useRef<HTMLDivElement>(null);
   const [isReadyToPlay, setIsReadyToPlay] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const dispatch = useAppDispatch();
+  const router = useRouter();
+
   const {
     currentTrack,
     isPlaying,
@@ -30,6 +37,29 @@ export default function Player() {
     currentTime,
     duration,
   } = useAppSelector((state) => state.tracks);
+
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+
+  // Инициализация состояния избранного для текущего трека
+  useEffect(() => {
+    if (currentTrack && Array.isArray(currentTrack.stared_user)) {
+      const staredUsers = currentTrack.stared_user;
+      if (user && user._id) {
+        const userInFavorites = staredUsers.some((userItem: unknown) => {
+          if (typeof userItem === 'object' && userItem !== null) {
+            const userObj = userItem as Record<string, unknown>;
+            return '_id' in userObj && userObj._id === user._id;
+          }
+          return userItem === user._id;
+        });
+        setIsFavorite(userInFavorites);
+      } else {
+        setIsFavorite(staredUsers.length > 0);
+      }
+    } else {
+      setIsFavorite(false);
+    }
+  }, [currentTrack, user]);
 
   // Инициализация громкости
   useEffect(() => {
@@ -90,10 +120,23 @@ export default function Player() {
 
     const handleEnded = () => {
       if (isLoop) {
+        // Сбрасываем время и начинаем сначала
         audio.currentTime = 0;
-        audio.play();
+        dispatch(resetCurrentTime());
+        audio.play().catch((e) => {
+          console.error('Error playing audio after loop:', e);
+        });
       } else {
         dispatch(nextTrack());
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (audioRef.current) {
+        const audioDuration = audioRef.current.duration;
+        if (!isNaN(audioDuration) && isFinite(audioDuration)) {
+          dispatch(setDuration(audioDuration));
+        }
       }
     };
 
@@ -110,6 +153,7 @@ export default function Player() {
     audio.removeEventListener('error', handleError);
 
     // Добавляем слушатели
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('ended', handleEnded);
@@ -117,7 +161,7 @@ export default function Player() {
 
     // Устанавливаем новый источник
     audio.src = currentTrack.track_file;
-    audio.loop = isLoop;
+    audio.loop = false;
     audio.load();
 
     // Функция очистки
@@ -126,8 +170,14 @@ export default function Player() {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, [currentTrack, dispatch, isLoop, isDragging]);
+  }, [currentTrack, dispatch, isDragging, isPlaying]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    audioRef.current.loop = isLoop;
+  }, [isLoop]);
 
   const handlePlayPause = () => {
     dispatch(togglePlay());
@@ -152,6 +202,44 @@ export default function Player() {
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     dispatch(setVolume(newVolume));
+  };
+
+  const handleFavoriteClick = async () => {
+    if (!currentTrack) return;
+
+    // Проверяем авторизацию
+    if (!isAuthenticated) {
+      router.push('/signin');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      if (isFavorite) {
+        // Удаляем из избранного
+        const result = await removeFromFavorites(currentTrack._id);
+        if (!isApiError(result)) {
+          setIsFavorite(false);
+          console.log(`Трек ${currentTrack.name} удален из избранного`);
+        } else {
+          console.error('Ошибка удаления из избранного:', result.message);
+        }
+      } else {
+        // Добавляем в избранное
+        const result = await addToFavorites(currentTrack._id);
+        if (!isApiError(result)) {
+          setIsFavorite(true);
+          console.log(`Трек ${currentTrack.name} добавлен в избранное`);
+        } else {
+          console.error('Ошибка добавления в избранное:', result.message);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating favorites:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const calculateNewTime = (clientX: number) => {
@@ -202,13 +290,10 @@ export default function Player() {
     };
   }, [handleMouseMove, handleMouseUp]);
 
-  const handleNotImplemented = () => {
-    alert('Еще не реализовано');
-  };
-
   // Форматирование времени
   const formatTime = (seconds: number) => {
-    if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+    if (isNaN(seconds) || !isFinite(seconds) || seconds === undefined)
+      return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -320,15 +405,33 @@ export default function Player() {
                 </div>
 
                 <div className={styles.trackPlay__likeDis}>
+                  {/* Кнопка лайка (добавление в избранное) */}
                   <div
-                    className={`${styles.player__btnShuffle} ${styles.btnIcon}`}
+                    className={`${styles.trackPlay__like} ${styles.btnIcon} ${isFavorite ? styles.active : ''}`}
+                    onClick={handleFavoriteClick}
+                    title={
+                      isFavorite
+                        ? 'Удалить из избранного'
+                        : 'Добавить в избранное'
+                    }
                   >
                     <svg className={styles.trackPlay__likeSvg}>
-                      <use xlinkHref="/img/icon/sprite.svg#icon-like"></use>
+                      <use
+                        xlinkHref={
+                          isFavorite
+                            ? '/img/icon/sprite.svg#icon-like-active'
+                            : '/img/icon/sprite.svg#icon-like'
+                        }
+                      ></use>
                     </svg>
+                    {isLoading && <div className={styles.loadingSpinner}></div>}
                   </div>
+
+                  {/* Кнопка дизлайка (нереализованная функциональность) */}
                   <div
                     className={`${styles.trackPlay__dislike} ${styles.btnIcon}`}
+                    onClick={() => alert('Функция пока не реализована')}
+                    title="Не нравится"
                   >
                     <svg className={styles.trackPlay__dislikeSvg}>
                       <use xlinkHref="/img/icon/sprite.svg#icon-dislike"></use>

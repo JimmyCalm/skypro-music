@@ -31,6 +31,9 @@ const trackSlice = createSlice({
   name: 'track',
   initialState,
   reducers: {
+    resetCurrentTime: (state) => {
+      state.currentTime = 0;
+    },
     setCurrentTrack: (state, action: PayloadAction<TrackType>) => {
       state.currentTrack = action.payload;
     },
@@ -139,6 +142,7 @@ export const {
   nextTrack,
   prevTrack,
   setCurrentPlaylist,
+  resetCurrentTime,
 } = trackSlice.actions;
 
 export const trackSliceReducer = trackSlice.reducer;

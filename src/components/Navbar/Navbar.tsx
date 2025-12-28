@@ -3,10 +3,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAppSelector, useAppDispatch } from '@/store/store';
+import { logout } from '@/store/features/authSlice';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -14,6 +20,12 @@ export default function Navbar() {
 
   const closeMenu = () => {
     setIsMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    router.push('/signin');
+    closeMenu();
   };
 
   return (
@@ -55,13 +67,29 @@ export default function Navbar() {
             </Link>
           </li>
           <li className={styles.menu__item}>
-            <Link
-              href="/signin"
-              className={styles.menu__link}
-              onClick={closeMenu}
-            >
-              Войти
-            </Link>
+            {isAuthenticated ? (
+              <button
+                className={styles.menu__link}
+                onClick={handleLogout}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'left',
+                }}
+              >
+                Выйти
+              </button>
+            ) : (
+              <Link
+                href="/signin"
+                className={styles.menu__link}
+                onClick={closeMenu}
+              >
+                Войти
+              </Link>
+            )}
           </li>
         </ul>
       </div>
