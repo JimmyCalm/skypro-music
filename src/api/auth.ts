@@ -80,7 +80,6 @@ export async function signUp(
       password,
       username,
     });
-
     return response.data as SignUpResponse;
   } catch (error: unknown) {
     return handleApiError(error);

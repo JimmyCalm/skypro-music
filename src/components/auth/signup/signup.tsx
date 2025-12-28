@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import styles from './signup.module.css';
 import classNames from 'classnames';
 import Link from 'next/link';
-import { signUp, signIn, getTokens, isApiError } from '@/api';
-import { setUser } from '@/store/features/authSlice';
+import { signUp, isApiError } from '@/api';
 import { useAppDispatch } from '@/store/store';
 
 export default function SignUp() {
@@ -15,6 +14,7 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -22,6 +22,7 @@ export default function SignUp() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
 
     // Валидация
     if (password !== confirmPassword) {
@@ -47,9 +48,10 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      // 1. Регистрация
+      // Регистрация
       const signUpResult = await signUp(email, password, username);
 
+      // Проверяем, является ли результат ошибкой
       if (isApiError(signUpResult)) {
         // Специфичная обработка ошибок из API
         if (signUpResult.status === 403) {
@@ -61,65 +63,24 @@ export default function SignUp() {
         return;
       }
 
-      // 2. После успешной регистрации сразу логиним пользователя
-      const authResult = await signIn(email, password);
-
-      if (isApiError(authResult)) {
-        setError(
-          'Регистрация успешна, но вход не удался. Попробуйте войти вручную.',
+      // Проверяем структуру успешного ответа
+      if (signUpResult.success) {
+        // Успешная регистрация
+        setSuccessMessage(
+          signUpResult.message || 'Регистрация прошла успешно!',
         );
-        setIsLoading(false);
-        return;
+
+        // Перенаправляем через 1.5 секунды
+        setTimeout(() => {
+          router.push('/signin');
+        }, 1500);
+      } else {
+        // Если success === false
+        setError(signUpResult.message || 'Неизвестная ошибка регистрации');
       }
-
-      // 3. Получение токенов
-      const tokenResult = await getTokens(email, password);
-
-      if (isApiError(tokenResult)) {
-        setError(tokenResult.message || 'Ошибка получения токенов');
-        setIsLoading(false);
-        return;
-      }
-
-      // 4. Сохраняем данные
-      localStorage.setItem('accessToken', tokenResult.access);
-      localStorage.setItem('refreshToken', tokenResult.refresh);
-      localStorage.setItem('user', JSON.stringify(authResult));
-
-      // 5. Сохраняем в Redux
-      dispatch(
-        setUser({
-          ...authResult,
-          accessToken: tokenResult.access,
-          refreshToken: tokenResult.refresh,
-        }),
-      );
-
-      // 6. Перенаправляем на главную
-      router.push('/');
     } catch (err: unknown) {
       console.error('Sign up error:', err);
-
-      // Типизируем ошибку
-      const typedError = err as Record<string, unknown>;
-
-      if (typedError.response || typedError.status === 412) {
-        const response = typedError.response as Record<string, unknown>;
-        const status = response?.status || typedError.status;
-
-        if (status === 412) {
-          setError('Требуется повторная авторизация');
-          localStorage.clear();
-        } else {
-          setError(`Ошибка ${status}. Попробуйте снова.`);
-        }
-      } else {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Произошла ошибка при регистрации',
-        );
-      }
+      setError('Произошла ошибка при регистрации');
     } finally {
       setIsLoading(false);
     }
@@ -187,6 +148,15 @@ export default function SignUp() {
               {error && (
                 <div className={styles.errorContainer}>
                   <div className={styles.errorText}>{error}</div>
+                </div>
+              )}
+
+              {successMessage && (
+                <div className={styles.successContainer}>
+                  <div className={styles.successText}>{successMessage}</div>
+                  <div className={styles.successText}>
+                    Перенаправляем на страницу входа...
+                  </div>
                 </div>
               )}
 
