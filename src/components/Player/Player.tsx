@@ -14,7 +14,9 @@ import {
   nextTrack,
   prevTrack,
   resetCurrentTime,
+  updateCurrentTrackStaredUser,
 } from '@/store/features/trackSlice';
+import { loadFavorites } from '@/store/features/favoritesSlice';
 import { useRouter } from 'next/navigation';
 import { addToFavorites, removeFromFavorites, isApiError } from '@/api';
 
@@ -221,7 +223,23 @@ export default function Player() {
         const result = await removeFromFavorites(currentTrack._id);
         if (!isApiError(result)) {
           setIsFavorite(false);
+          // Обновляем stared_user в Redux для текущего трека
+          if (currentTrack) {
+            const newStaredUser = currentTrack.stared_user.filter(
+              (userItem) => {
+                if (typeof userItem === 'object' && userItem !== null) {
+                  const userObj = userItem as Record<string, unknown>;
+                  return !('_id' in userObj && userObj._id === user?._id);
+                }
+                return userItem !== user?._id;
+              },
+            );
+            dispatch(
+              updateCurrentTrackStaredUser({ stared_user: newStaredUser }),
+            );
+          }
           console.log(`Трек ${currentTrack.name} удален из избранного`);
+          dispatch(loadFavorites());
         } else {
           console.error('Ошибка удаления из избранного:', result.message);
         }
@@ -230,7 +248,26 @@ export default function Player() {
         const result = await addToFavorites(currentTrack._id);
         if (!isApiError(result)) {
           setIsFavorite(true);
+          // Обновляем stared_user в Redux для текущего трека
+          if (currentTrack && user && user._id) {
+            const newStaredUser = [...currentTrack.stared_user];
+            if (
+              !newStaredUser.some((userItem) => {
+                if (typeof userItem === 'object' && userItem !== null) {
+                  const userObj = userItem as Record<string, unknown>;
+                  return '_id' in userObj && userObj._id === user._id;
+                }
+                return userItem === user._id;
+              })
+            ) {
+              newStaredUser.push(user._id);
+            }
+            dispatch(
+              updateCurrentTrackStaredUser({ stared_user: newStaredUser }),
+            );
+          }
           console.log(`Трек ${currentTrack.name} добавлен в избранное`);
+          dispatch(loadFavorites());
         } else {
           console.error('Ошибка добавления в избранное:', result.message);
         }

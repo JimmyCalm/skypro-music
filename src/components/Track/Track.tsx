@@ -4,7 +4,20 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './Track.module.css';
 import { useAppDispatch, useAppSelector } from '@/store/store';
-import { playTrack } from '@/store/features/trackSlice';
+import {
+  setIsPlaying,
+  togglePlay,
+  toggleShuffle,
+  toggleLoop,
+  setVolume,
+  setCurrentTime,
+  setDuration,
+  nextTrack,
+  prevTrack,
+  resetCurrentTime,
+  updateCurrentTrackStaredUser,
+  playTrack,
+} from '@/store/features/trackSlice';
 import {
   addToFavoritesRedux,
   loadFavorites,
@@ -125,8 +138,25 @@ export default function Track({
         if (!isApiError(result)) {
           setIsFavorite(false);
 
+          const updatedStaredUser = stared_user.filter((userItem) => {
+            if (typeof userItem === 'object' && userItem !== null) {
+              const userObj = userItem as Record<string, unknown>;
+              return !('_id' in userObj && user && userObj._id === user._id);
+            }
+            return user && userItem !== user._id;
+          });
+
           // Обновляем Redux store немедленно
           dispatch(removeFromFavoritesRedux(_id));
+
+          // Если это текущий трек, обновляем в Redux
+          if (currentTrack && currentTrack._id === _id) {
+            dispatch(
+              updateCurrentTrackStaredUser({
+                stared_user: updatedStaredUser,
+              }),
+            );
+          }
 
           console.log(`Трек ${name} удален из избранного`);
           // Обновляем список избранного
@@ -141,8 +171,32 @@ export default function Track({
         if (!isApiError(result)) {
           setIsFavorite(true);
 
+          const updatedStaredUser = [...stared_user];
+          if (
+            user &&
+            user._id &&
+            !updatedStaredUser.some((userItem) => {
+              if (typeof userItem === 'object' && userItem !== null) {
+                const userObj = userItem as Record<string, unknown>;
+                return '_id' in userObj && userObj._id === user._id;
+              }
+              return userItem === user._id;
+            })
+          ) {
+            updatedStaredUser.push(user._id);
+          }
+
           // Обновляем Redux store немедленно
           dispatch(addToFavoritesRedux(trackData));
+
+          // Если это текущий трек, обновляем в Redux
+          if (currentTrack && currentTrack._id === _id) {
+            dispatch(
+              updateCurrentTrackStaredUser({
+                stared_user: updatedStaredUser,
+              }),
+            );
+          }
 
           console.log(`Трек ${name} добавлен в избранное`);
           // Обновляем список избранного
