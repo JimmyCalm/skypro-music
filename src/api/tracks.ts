@@ -7,6 +7,7 @@ import {
   SelectionType,
 } from '@/sharedTypes/types';
 import { data as fallbackData } from '@data'; // Используем статические данные как fallback
+import { getFallbackTracks } from '@/utils/fallbackData';
 
 // Типы для ошибок axios
 interface AxiosResponseData {
@@ -274,7 +275,13 @@ export async function getFavoriteTracks(): Promise<TrackType[] | ApiError> {
     return favoriteTracks;
   } catch (error: unknown) {
     console.warn('Error loading favorite tracks:', error);
-    return handleApiError(error);
+    // Fallback to localStorage for demo
+    if (typeof window === 'undefined') return [];
+    const likedTracks = JSON.parse(
+      localStorage.getItem('likedTracks') || '[]',
+    ) as number[];
+    const allTracks = getFallbackTracks();
+    return allTracks.filter((track) => likedTracks.includes(track._id));
   }
 }
 
@@ -308,12 +315,18 @@ export async function addToFavorites(
     console.error(`Error adding track ${trackId} to favorites:`, error);
 
     // Даже при ошибке API симулируем успех для демонстрации
-    // В реальном приложении здесь должна быть обработка ошибки
     console.log('Simulating successful favorite addition for demo');
+    // Обновляем localStorage для демо
+    if (typeof window !== 'undefined') {
+      const likedTracks = JSON.parse(
+        localStorage.getItem('likedTracks') || '[]',
+      ) as number[];
+      if (!likedTracks.includes(trackId)) {
+        likedTracks.push(trackId);
+        localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
+      }
+    }
     return { success: true };
-
-    // Раскомментируйте для реального приложения:
-    // return handleApiError(error);
   }
 }
 
@@ -343,10 +356,15 @@ export async function removeFromFavorites(
 
     // Даже при ошибке API симулируем успех для демонстрации
     console.log('Simulating successful favorite removal for demo');
+    // Обновляем localStorage для демо
+    if (typeof window !== 'undefined') {
+      const likedTracks = JSON.parse(
+        localStorage.getItem('likedTracks') || '[]',
+      ) as number[];
+      const updated = likedTracks.filter((id) => id !== trackId);
+      localStorage.setItem('likedTracks', JSON.stringify(updated));
+    }
     return { success: true };
-
-    // Раскомментируйте для реального приложения:
-    // return handleApiError(error);
   }
 }
 

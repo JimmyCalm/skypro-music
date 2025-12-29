@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation';
 import styles from './Track.module.css';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import { playTrack } from '@/store/features/trackSlice';
-import { TrackType, UserType } from '@/sharedTypes/types';
+import {
+  addToFavoritesRedux,
+  loadFavorites,
+  removeFromFavoritesRedux,
+} from '@/store/features/favoritesSlice';
+import { TrackType } from '@/sharedTypes/types';
 import { addToFavorites, removeFromFavorites, isApiError } from '@/api';
 
 interface TrackProps extends TrackType {}
@@ -26,32 +31,39 @@ export default function Track({
   const router = useRouter();
   const { currentTrack, isPlaying } = useAppSelector((state) => state.tracks);
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { tracks: favoriteTracks } = useAppSelector((state) => state.favorites);
 
-  const isCurrentTrack = currentTrack?._id === _id;
-
-  // Инициализируем состояние избранного
-  useEffect(() => {
-    if (Array.isArray(stared_user) && stared_user.length > 0) {
-      // Проверяем, есть ли текущий пользователь в stared_user
-      if (user && user._id) {
-        const userInFavorites = stared_user.some((userItem: unknown) => {
+  // Проверяем, есть ли трек в избранном
+  const isTrackInFavorites = favoriteTracks.some((track) => track._id === _id);
+  const [isFavorite, setIsFavorite] = useState(
+    isTrackInFavorites ||
+      (user &&
+        stared_user.some((userItem: unknown) => {
           if (typeof userItem === 'object' && userItem !== null) {
             const userObj = userItem as Record<string, unknown>;
             return '_id' in userObj && userObj._id === user._id;
           }
           return userItem === user._id;
-        });
-        setIsFavorite(userInFavorites);
-      } else {
-        // Если пользователь не авторизован, просто проверяем наличие любых лайков
-        setIsFavorite(stared_user.length > 0);
-      }
-    } else {
-      setIsFavorite(false);
-    }
-  }, [stared_user, user]);
+        })),
+  );
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Синхронизируем состояние избранного при изменении favoriteTracks или stared_user
+  useEffect(() => {
+    const isInFavorites = favoriteTracks.some((track) => track._id === _id);
+    const isInStaredUser =
+      user &&
+      stared_user.some((userItem: unknown) => {
+        if (typeof userItem === 'object' && userItem !== null) {
+          const userObj = userItem as Record<string, unknown>;
+          return '_id' in userObj && userObj._id === user._id;
+        }
+        return userItem === user._id;
+      });
+    setIsFavorite(isInFavorites || !!isInStaredUser);
+  }, [isTrackInFavorites, stared_user, user, _id]);
+
+  const isCurrentTrack = currentTrack?._id === _id;
 
   const formatTime = (seconds: number) => {
     if (isNaN(seconds) || seconds === undefined || seconds === null)
@@ -94,12 +106,31 @@ export default function Track({
     setIsLoading(true);
 
     try {
+      const trackData: TrackType = {
+        _id,
+        name,
+        author,
+        album,
+        duration_in_seconds,
+        track_file,
+        release_date: release_date || '',
+        genre,
+        logo,
+        stared_user,
+      };
+
       if (isFavorite) {
         // Удаляем из избранного
         const result = await removeFromFavorites(_id);
         if (!isApiError(result)) {
           setIsFavorite(false);
+
+          // Обновляем Redux store немедленно
+          dispatch(removeFromFavoritesRedux(_id));
+
           console.log(`Трек ${name} удален из избранного`);
+          // Обновляем список избранного
+          dispatch(loadFavorites());
         } else {
           console.error('Ошибка удаления из избранного:', result.message);
           alert(`Ошибка: ${result.message}`);
@@ -109,7 +140,13 @@ export default function Track({
         const result = await addToFavorites(_id);
         if (!isApiError(result)) {
           setIsFavorite(true);
+
+          // Обновляем Redux store немедленно
+          dispatch(addToFavoritesRedux(trackData));
+
           console.log(`Трек ${name} добавлен в избранное`);
+          // Обновляем список избранного
+          dispatch(loadFavorites());
         } else {
           console.error('Ошибка добавления в избранное:', result.message);
           alert(`Ошибка: ${result.message}`);
@@ -214,13 +251,7 @@ export default function Track({
           title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
         >
           <svg className={styles.track__favoriteSvg}>
-            <use
-              xlinkHref={
-                isFavorite
-                  ? '/img/icon/sprite.svg#icon-like-active'
-                  : '/img/icon/sprite.svg#icon-like'
-              }
-            ></use>
+            <use xlinkHref="/img/icon/sprite.svg#icon-like"></use>
           </svg>
           {isLoading && <div className={styles.loadingSpinner}></div>}
         </button>
