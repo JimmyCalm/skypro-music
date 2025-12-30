@@ -74,7 +74,7 @@ export default function Track({
         return userItem === user._id;
       });
     setIsFavorite(isInFavorites || !!isInStaredUser);
-  }, [isTrackInFavorites, stared_user, user, _id]);
+  }, [favoriteTracks, _id, stared_user, user]);
 
   const isCurrentTrack = currentTrack?._id === _id;
 
@@ -108,6 +108,7 @@ export default function Track({
   };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
 
     // Проверяем авторизацию
@@ -146,7 +147,7 @@ export default function Track({
             return user && userItem !== user._id;
           });
 
-          // Обновляем Redux store немедленно
+          // НЕМЕДЛЕННО обновляем Redux store (синхронно)
           dispatch(removeFromFavoritesRedux(_id));
 
           // Если это текущий трек, обновляем в Redux
@@ -159,8 +160,6 @@ export default function Track({
           }
 
           console.log(`Трек ${name} удален из избранного`);
-          // Обновляем список избранного
-          dispatch(loadFavorites());
         } else {
           console.error('Ошибка удаления из избранного:', result.message);
           alert(`Ошибка: ${result.message}`);
@@ -186,7 +185,7 @@ export default function Track({
             updatedStaredUser.push(user._id);
           }
 
-          // Обновляем Redux store немедленно
+          // НЕМЕДЛЕННО обновляем Redux store (синхронно)
           dispatch(addToFavoritesRedux(trackData));
 
           // Если это текущий трек, обновляем в Redux
@@ -199,8 +198,6 @@ export default function Track({
           }
 
           console.log(`Трек ${name} добавлен в избранное`);
-          // Обновляем список избранного
-          dispatch(loadFavorites());
         } else {
           console.error('Ошибка добавления в избранное:', result.message);
           alert(`Ошибка: ${result.message}`);

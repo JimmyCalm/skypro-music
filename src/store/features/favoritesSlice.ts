@@ -14,12 +14,6 @@ const initialState: FavoritesState = {
   error: null,
 };
 
-// Функция для получения избранных треков из localStorage (для fallback)
-const getLikedTracksFromStorage = (): number[] => {
-  if (typeof window === 'undefined') return [];
-  return JSON.parse(localStorage.getItem('likedTracks') || '[]');
-};
-
 export const loadFavorites = createAsyncThunk(
   'favorites/loadFavorites',
   async () => {
@@ -27,6 +21,7 @@ export const loadFavorites = createAsyncThunk(
       const result = await getFavoriteTracks();
 
       if (isApiError(result)) {
+        console.warn('ошибка при загрузке избранного:', result.message);
         return [];
       }
 
@@ -40,20 +35,17 @@ export const loadFavorites = createAsyncThunk(
 
 export const addToFavoritesRedux = createAsyncThunk(
   'favorites/addToFavorites',
-  async (track: TrackType, { dispatch }) => {
-    // Сохраняем в localStorage
+  async (track: TrackType) => {
+    // Сохраняем в localStorage для демо
     if (typeof window !== 'undefined') {
       const likedTracks = JSON.parse(
         localStorage.getItem('likedTracks') || '[]',
-      );
+      ) as number[];
       if (!likedTracks.includes(track._id)) {
         likedTracks.push(track._id);
         localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
       }
     }
-
-    // Обновляем состояние немедленно
-    dispatch(addTrackToFavorites(track));
 
     return track;
   },
@@ -61,18 +53,15 @@ export const addToFavoritesRedux = createAsyncThunk(
 
 export const removeFromFavoritesRedux = createAsyncThunk(
   'favorites/removeFromFavorites',
-  async (trackId: number, { dispatch }) => {
-    // Удаляем из localStorage
+  async (trackId: number) => {
+    // Удаляем из localStorage для демо
     if (typeof window !== 'undefined') {
       const likedTracks = JSON.parse(
         localStorage.getItem('likedTracks') || '[]',
-      );
+      ) as number[];
       const updatedTracks = likedTracks.filter((id: number) => id !== trackId);
       localStorage.setItem('likedTracks', JSON.stringify(updatedTracks));
     }
-
-    // Обновляем состояние немедленно
-    dispatch(removeTrackFromFavorites(trackId));
 
     return trackId;
   },
@@ -101,9 +90,6 @@ const favoritesSlice = createSlice({
         (track) => track._id !== action.payload,
       );
     },
-    syncFavoritesFromStorage: (state, action: PayloadAction<TrackType[]>) => {
-      state.tracks = action.payload;
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -116,19 +102,35 @@ const favoritesSlice = createSlice({
         (state, action: PayloadAction<TrackType[]>) => {
           state.loading = false;
           state.tracks = action.payload;
+          state.error = null;
         },
       )
       .addCase(loadFavorites.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      });
+        state.error = action.error.message || 'Ошибка загрузки избранного';
+      })
+      .addCase(
+        addToFavoritesRedux.fulfilled,
+        (state, action: PayloadAction<TrackType>) => {
+          const trackExists = state.tracks.some(
+            (t) => t._id === action.payload._id,
+          );
+          if (!trackExists) {
+            state.tracks.push(action.payload);
+          }
+        },
+      )
+      .addCase(
+        removeFromFavoritesRedux.fulfilled,
+        (state, action: PayloadAction<number>) => {
+          state.tracks = state.tracks.filter(
+            (track) => track._id !== action.payload,
+          );
+        },
+      );
   },
 });
 
-export const {
-  clearFavorites,
-  addTrackToFavorites,
-  removeTrackFromFavorites,
-  syncFavoritesFromStorage,
-} = favoritesSlice.actions;
+export const { clearFavorites, addTrackToFavorites, removeTrackFromFavorites } =
+  favoritesSlice.actions;
 export const favoritesReducer = favoritesSlice.reducer;

@@ -20,16 +20,6 @@ export default function FavoritesPage() {
     dispatch(loadFavorites());
   }, [dispatch]);
 
-  // Также обновляем при изменении localStorage
-  useEffect(() => {
-    const handleStorageChange = () => {
-      dispatch(loadFavorites());
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [dispatch]);
-
   return (
     <Layout pageTitle="Мой плейлист">
       {isLoading ? (
@@ -79,9 +69,10 @@ export default function FavoritesPage() {
           </div>
 
           <div className={styles.content__playlist}>
-            {favoriteTracks.map((track) => (
+            {/* Ключи включают index для правильного обновления списка */}
+            {favoriteTracks.map((track, index) => (
               <Track
-                key={track._id}
+                key={`${track._id}-${index}-${Date.now()}`}
                 _id={track._id}
                 name={track.name}
                 author={track.author}

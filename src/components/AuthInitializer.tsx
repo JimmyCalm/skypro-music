@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useAppDispatch } from '@/store/store';
 import { setUser } from '@/store/features/authSlice';
+import { loadFavorites } from '@/store/features/favoritesSlice';
 
 export default function AuthInitializer() {
   const dispatch = useAppDispatch();
@@ -24,6 +25,8 @@ export default function AuthInitializer() {
               refreshToken: refreshToken || undefined,
             }),
           );
+          // ЗАГРУЖАЕМ ИЗБРАННОЕ СРАЗУ ПОСЛЕ УСПЕШНОЙ АУТЕНТИФИКАЦИИ
+          dispatch(loadFavorites());
         } catch (error) {
           console.error('Error parsing user data:', error);
           localStorage.removeItem('user');
@@ -34,5 +37,5 @@ export default function AuthInitializer() {
     }
   }, [dispatch]);
 
-  return null; // Этот компонент ничего не рендерит
+  return null;
 }
