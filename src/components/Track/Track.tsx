@@ -293,12 +293,28 @@ export default function Track({
           onClick={handleFavoriteClick}
           disabled={isLoading}
           aria-label={
-            isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'
+            isAuthenticated
+              ? isFavorite
+                ? 'Удалить из избранного'
+                : 'Добавить в избранное'
+              : 'Войдите, чтобы добавить в избранное'
           }
-          title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+          title={
+            isAuthenticated
+              ? isFavorite
+                ? 'Удалить из избранного'
+                : 'Добавить в избранное'
+              : 'Войдите, чтобы добавить в избранное'
+          }
         >
           <svg className={styles.track__favoriteSvg}>
-            <use xlinkHref="/img/icon/sprite.svg#icon-like"></use>
+            <use
+              xlinkHref={
+                isAuthenticated
+                  ? '/img/icon/sprite.svg#icon-like'
+                  : '/img/icon/sprite.svg#icon-dislike'
+              }
+            ></use>
           </svg>
           {isLoading && <div className={styles.loadingSpinner}></div>}
         </button>

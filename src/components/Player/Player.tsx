@@ -444,27 +444,34 @@ export default function Player() {
                 <div className={styles.trackPlay__likeDis}>
                   {/* Кнопка лайка (добавление в избранное) */}
                   <div
-                    className={`${styles.trackPlay__like} ${styles.btnIcon} ${isFavorite ? styles.active : ''}`}
-                    onClick={handleFavoriteClick}
+                    className={`${styles.trackPlay__like} ${styles.btnIcon} ${isFavorite ? styles.active : ''} ${!isAuthenticated ? styles.disabled : ''}`}
+                    onClick={
+                      isAuthenticated
+                        ? handleFavoriteClick
+                        : () => router.push('/signin')
+                    }
                     title={
-                      isFavorite
-                        ? 'Удалить из избранного'
-                        : 'Добавить в избранное'
+                      !isAuthenticated
+                        ? 'Авторизуйтесь, чтобы добавлять в избранное'
+                        : isFavorite
+                          ? 'Удалить из избранного'
+                          : 'Добавить в избранное'
                     }
                   >
                     <svg className={styles.trackPlay__likeSvg}>
                       <use
                         xlinkHref={
-                          isFavorite
-                            ? '/img/icon/sprite.svg#icon-like-active'
-                            : '/img/icon/sprite.svg#icon-like'
+                          !isAuthenticated
+                            ? '/img/icon/sprite.svg#icon-dislike'
+                            : isFavorite
+                              ? '/img/icon/sprite.svg#icon-like-active'
+                              : '/img/icon/sprite.svg#icon-like'
                         }
                       ></use>
                     </svg>
                     {isLoading && <div className={styles.loadingSpinner}></div>}
                   </div>
 
-                  {/* Кнопка дизлайка (нереализованная функциональность) */}
                   <div
                     className={`${styles.trackPlay__dislike} ${styles.btnIcon}`}
                     onClick={() => alert('Функция пока не реализована')}
