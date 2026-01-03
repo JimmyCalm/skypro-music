@@ -134,73 +134,69 @@ export default function Track({
       };
 
       if (isFavorite) {
-        // Удаляем из избранного
         const result = await removeFromFavorites(_id);
         if (!isApiError(result)) {
           setIsFavorite(false);
 
-          const updatedStaredUser = stared_user.filter((userItem) => {
-            if (typeof userItem === 'object' && userItem !== null) {
-              const userObj = userItem as Record<string, unknown>;
-              return !('_id' in userObj && user && userObj._id === user._id);
-            }
-            return user && userItem !== user._id;
-          });
-
-          // НЕМЕДЛЕННО обновляем Redux store (синхронно)
+          // Обновляем Redux store
           dispatch(removeFromFavoritesRedux(_id));
 
-          // Если это текущий трек, обновляем в Redux
+          // Обновляем текущий трек если он играет
           if (currentTrack && currentTrack._id === _id) {
+            const updatedStaredUser = stared_user.filter((userItem) => {
+              if (typeof userItem === 'object' && userItem !== null) {
+                const userObj = userItem as Record<string, unknown>;
+                return !('_id' in userObj && user && userObj._id === user._id);
+              }
+              return user && userItem !== user._id;
+            });
+
             dispatch(
               updateCurrentTrackStaredUser({
                 stared_user: updatedStaredUser,
               }),
             );
           }
-
-          console.log(`Трек ${name} удален из избранного`);
         } else {
           console.error('Ошибка удаления из избранного:', result.message);
           alert(`Ошибка: ${result.message}`);
+          return; // Не обновляем состояние если ошибка
         }
       } else {
-        // Добавляем в избранное
         const result = await addToFavorites(_id);
         if (!isApiError(result)) {
           setIsFavorite(true);
 
-          const updatedStaredUser = [...stared_user];
-          if (
-            user &&
-            user._id &&
-            !updatedStaredUser.some((userItem) => {
-              if (typeof userItem === 'object' && userItem !== null) {
-                const userObj = userItem as Record<string, unknown>;
-                return '_id' in userObj && userObj._id === user._id;
-              }
-              return userItem === user._id;
-            })
-          ) {
-            updatedStaredUser.push(user._id);
-          }
-
-          // НЕМЕДЛЕННО обновляем Redux store (синхронно)
+          // Обновляем Redux store
           dispatch(addToFavoritesRedux(trackData));
 
-          // Если это текущий трек, обновляем в Redux
+          // Обновляем текущий трек если он играет
           if (currentTrack && currentTrack._id === _id) {
+            const updatedStaredUser = [...stared_user];
+            if (
+              user &&
+              user._id &&
+              !updatedStaredUser.some((userItem) => {
+                if (typeof userItem === 'object' && userItem !== null) {
+                  const userObj = userItem as Record<string, unknown>;
+                  return '_id' in userObj && userObj._id === user._id;
+                }
+                return userItem === user._id;
+              })
+            ) {
+              updatedStaredUser.push(user._id);
+            }
+
             dispatch(
               updateCurrentTrackStaredUser({
                 stared_user: updatedStaredUser,
               }),
             );
           }
-
-          console.log(`Трек ${name} добавлен в избранное`);
         } else {
           console.error('Ошибка добавления в избранное:', result.message);
           alert(`Ошибка: ${result.message}`);
+          return; // Не обновляем состояние если ошибка
         }
       }
     } catch (error) {

@@ -21,14 +21,17 @@ export const loadFavorites = createAsyncThunk(
       const result = await getFavoriteTracks();
 
       if (isApiError(result)) {
-        console.warn('ошибка при загрузке избранного:', result.message);
-        return [];
+        console.warn(
+          'Ошибка при загрузке избранного с сервера:',
+          result.message,
+        );
+        throw new Error(result.message);
       }
 
       return result as TrackType[];
     } catch (error) {
-      console.error('Error loading favorites:', error);
-      return [];
+      console.error('Error loading favorites from API:', error);
+      throw error;
     }
   },
 );
@@ -36,17 +39,6 @@ export const loadFavorites = createAsyncThunk(
 export const addToFavoritesRedux = createAsyncThunk(
   'favorites/addToFavorites',
   async (track: TrackType) => {
-    // Сохраняем в localStorage для демо
-    if (typeof window !== 'undefined') {
-      const likedTracks = JSON.parse(
-        localStorage.getItem('likedTracks') || '[]',
-      ) as number[];
-      if (!likedTracks.includes(track._id)) {
-        likedTracks.push(track._id);
-        localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
-      }
-    }
-
     return track;
   },
 );
@@ -54,15 +46,6 @@ export const addToFavoritesRedux = createAsyncThunk(
 export const removeFromFavoritesRedux = createAsyncThunk(
   'favorites/removeFromFavorites',
   async (trackId: number) => {
-    // Удаляем из localStorage для демо
-    if (typeof window !== 'undefined') {
-      const likedTracks = JSON.parse(
-        localStorage.getItem('likedTracks') || '[]',
-      ) as number[];
-      const updatedTracks = likedTracks.filter((id: number) => id !== trackId);
-      localStorage.setItem('likedTracks', JSON.stringify(updatedTracks));
-    }
-
     return trackId;
   },
 );
@@ -73,9 +56,6 @@ const favoritesSlice = createSlice({
   reducers: {
     clearFavorites: (state) => {
       state.tracks = [];
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('likedTracks');
-      }
     },
     addTrackToFavorites: (state, action: PayloadAction<TrackType>) => {
       const trackExists = state.tracks.some(
@@ -107,7 +87,8 @@ const favoritesSlice = createSlice({
       )
       .addCase(loadFavorites.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Ошибка загрузки избранного';
+        state.error =
+          action.error.message || 'Ошибка загрузки избранного с сервера';
       })
       .addCase(
         addToFavoritesRedux.fulfilled,
