@@ -7,6 +7,7 @@ import {
   SelectionType,
 } from '@/sharedTypes/types';
 import { data as fallbackData } from '@data'; // Используем статические данные как fallback
+import { getFallbackTracks } from '@/utils/fallbackData';
 
 // Типы для ошибок axios
 interface AxiosResponseData {
@@ -247,7 +248,6 @@ export async function getFavoriteTracks(): Promise<TrackType[] | ApiError> {
 
     let favoriteTracks: TrackType[] = [];
 
-    // Аналогичная логика извлечения данных
     if (Array.isArray(response.data)) {
       favoriteTracks = response.data as TrackType[];
     } else if (
@@ -270,10 +270,10 @@ export async function getFavoriteTracks(): Promise<TrackType[] | ApiError> {
       }
     }
 
-    console.log(`Loaded ${favoriteTracks.length} favorite tracks`);
+    console.log(`Loaded ${favoriteTracks.length} favorite tracks from API`);
     return favoriteTracks;
   } catch (error: unknown) {
-    console.warn('Error loading favorite tracks:', error);
+    console.error('Error loading favorite tracks from API:', error);
     return handleApiError(error);
   }
 }
@@ -287,7 +287,7 @@ export async function addToFavorites(
   trackId: number,
 ): Promise<{ success: boolean } | ApiError> {
   try {
-    console.log(`Adding track ${trackId} to favorites...`);
+    console.log(`Adding track ${trackId} to favorites via API...`);
     const response = await api.post(`/catalog/track/${trackId}/favorite/`);
 
     // Проверяем разные форматы успешного ответа
@@ -298,22 +298,15 @@ export async function addToFavorites(
           success:
             data.success ||
             (data.message?.toLowerCase().includes('успешно') ? true : false) ||
-            true, // Если поле success не указано, считаем успехом
+            true,
         };
       }
     }
 
     return { success: true };
   } catch (error: unknown) {
-    console.error(`Error adding track ${trackId} to favorites:`, error);
-
-    // Даже при ошибке API симулируем успех для демонстрации
-    // В реальном приложении здесь должна быть обработка ошибки
-    console.log('Simulating successful favorite addition for demo');
-    return { success: true };
-
-    // Раскомментируйте для реального приложения:
-    // return handleApiError(error);
+    console.error(`Error adding track ${trackId} to favorites via API:`, error);
+    return handleApiError(error);
   }
 }
 
@@ -321,7 +314,7 @@ export async function removeFromFavorites(
   trackId: number,
 ): Promise<{ success: boolean } | ApiError> {
   try {
-    console.log(`Removing track ${trackId} from favorites...`);
+    console.log(`Removing track ${trackId} from favorites via API...`);
     const response = await api.delete(`/catalog/track/${trackId}/favorite/`);
 
     // Проверяем разные форматы успешного ответа
@@ -339,14 +332,11 @@ export async function removeFromFavorites(
 
     return { success: true };
   } catch (error: unknown) {
-    console.error(`Error removing track ${trackId} from favorites:`, error);
-
-    // Даже при ошибке API симулируем успех для демонстрации
-    console.log('Simulating successful favorite removal for demo');
-    return { success: true };
-
-    // Раскомментируйте для реального приложения:
-    // return handleApiError(error);
+    console.error(
+      `Error removing track ${trackId} from favorites via API:`,
+      error,
+    );
+    return handleApiError(error);
   }
 }
 

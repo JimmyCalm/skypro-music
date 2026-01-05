@@ -1,42 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Layout from '@/components/Layout/Layout';
 import Track from '@/components/Track/Track';
-import { TrackType } from '@/sharedTypes/types';
-import { getFavoriteTracks, isApiError } from '@/api';
+import { useAppDispatch, useAppSelector } from '@/store/store';
+import { loadFavorites } from '@/store/features/favoritesSlice';
 import styles from '../page.module.css';
 
 export default function FavoritesPage() {
-  const [favoriteTracks, setFavoriteTracks] = useState<TrackType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const {
+    tracks: favoriteTracks,
+    loading: isLoading,
+    error,
+  } = useAppSelector((state) => state.favorites);
 
+  // Загружаем избранное при монтировании
   useEffect(() => {
-    async function loadFavoriteTracks() {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const result = await getFavoriteTracks();
-
-        if (isApiError(result)) {
-          setError(result.message);
-          return;
-        }
-
-        setFavoriteTracks(result);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Ошибка загрузки избранного',
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadFavoriteTracks();
-  }, []);
+    dispatch(loadFavorites());
+  }, [dispatch]);
 
   return (
     <Layout pageTitle="Мой плейлист">
@@ -52,7 +34,7 @@ export default function FavoritesPage() {
           <p className={styles.errorMessage}>{error}</p>
           <button
             className={styles.retryButton}
-            onClick={() => window.location.reload()}
+            onClick={() => dispatch(loadFavorites())}
           >
             Попробовать снова
           </button>
@@ -87,9 +69,10 @@ export default function FavoritesPage() {
           </div>
 
           <div className={styles.content__playlist}>
-            {favoriteTracks.map((track) => (
+            {/* Ключи включают index для правильного обновления списка */}
+            {favoriteTracks.map((track, index) => (
               <Track
-                key={track._id}
+                key={`${track._id}-${index}-${Date.now()}`}
                 _id={track._id}
                 name={track.name}
                 author={track.author}

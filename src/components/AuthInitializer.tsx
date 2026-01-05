@@ -3,12 +3,12 @@
 import { useEffect } from 'react';
 import { useAppDispatch } from '@/store/store';
 import { setUser } from '@/store/features/authSlice';
+import { loadFavorites } from '@/store/features/favoritesSlice';
 
 export default function AuthInitializer() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    // Проверяем, есть ли данные пользователя в localStorage
     if (typeof window !== 'undefined') {
       const userData = localStorage.getItem('user');
       const accessToken = localStorage.getItem('accessToken');
@@ -24,6 +24,19 @@ export default function AuthInitializer() {
               refreshToken: refreshToken || undefined,
             }),
           );
+
+          dispatch(loadFavorites());
+
+          // Добавляем слушатель события входа пользователя
+          const handleUserLoggedIn = () => {
+            dispatch(loadFavorites());
+          };
+
+          window.addEventListener('user-logged-in', handleUserLoggedIn);
+
+          return () => {
+            window.removeEventListener('user-logged-in', handleUserLoggedIn);
+          };
         } catch (error) {
           console.error('Error parsing user data:', error);
           localStorage.removeItem('user');
@@ -34,5 +47,5 @@ export default function AuthInitializer() {
     }
   }, [dispatch]);
 
-  return null; // Этот компонент ничего не рендерит
+  return null;
 }

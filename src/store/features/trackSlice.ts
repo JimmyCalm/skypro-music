@@ -75,6 +75,14 @@ const trackSlice = createSlice({
     setDuration: (state, action: PayloadAction<number>) => {
       state.duration = action.payload;
     },
+    updateCurrentTrackStaredUser: (
+      state,
+      action: PayloadAction<{ stared_user: unknown[] }>,
+    ) => {
+      if (state.currentTrack) {
+        state.currentTrack.stared_user = action.payload.stared_user;
+      }
+    },
     nextTrack: (state) => {
       if (state.currentPlaylist.length === 0) return;
 
@@ -139,6 +147,7 @@ export const {
   setVolume,
   setCurrentTime,
   setDuration,
+  updateCurrentTrackStaredUser,
   nextTrack,
   prevTrack,
   setCurrentPlaylist,
