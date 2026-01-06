@@ -114,6 +114,8 @@ export default function SelectionContent({
         )}
       </div>
 
+      <h2 className={styles.centerblock__h2}>{pageTitle}</h2>
+
       {/* Фильтры */}
       <div className={styles.centerblock__filter}>
         <div className={styles.filter__title}>Искать по:</div>

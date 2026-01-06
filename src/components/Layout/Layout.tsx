@@ -19,10 +19,6 @@ export default function Layout({ children, pageTitle }: LayoutProps) {
           <Navbar />
 
           <div className={styles.centerblock}>
-            {pageTitle && (
-              <h2 className={styles.centerblock__h2}>{pageTitle}</h2>
-            )}
-
             {/* Контент страницы (поиск теперь в компонентах страниц) */}
             {children}
           </div>

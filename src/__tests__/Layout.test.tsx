@@ -34,26 +34,4 @@ describe('Layout Component', () => {
     expect(screen.getByTestId('player')).toBeInTheDocument();
     expect(screen.getByTestId('content')).toBeInTheDocument();
   });
-
-  test('отображает заголовок страницы если передан', () => {
-    render(
-      <Layout pageTitle="Моя музыка">
-        <div>Контент</div>
-      </Layout>,
-    );
-
-    expect(
-      screen.getByRole('heading', { name: 'Моя музыка' }),
-    ).toBeInTheDocument();
-  });
-
-  test('не отображает заголовок если не передан', () => {
-    render(
-      <Layout>
-        <div>Контент</div>
-      </Layout>,
-    );
-
-    expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
-  });
 });
