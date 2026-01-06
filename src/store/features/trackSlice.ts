@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TrackType } from '@/sharedTypes/types';
 
-type initialStateType = {
+export type initialStateType = {
   currentTrack: TrackType | null;
   currentPlaylist: TrackType[];
   currentTrackIndex: number;

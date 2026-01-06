@@ -100,7 +100,11 @@ export default function Signin() {
       <div className={styles.wrapper}>
         <div className={styles.containerEnter}>
           <div className={styles.modal__block}>
-            <form className={styles.modal__form} onSubmit={handleSubmit}>
+            <form
+              className={styles.modal__form}
+              onSubmit={handleSubmit}
+              aria-label="Форма входа"
+            >
               <Link href="/">
                 <div className={styles.modal__logo}>
                   <img src="/img/logo_modal.png" alt="logo" />

@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:update": "jest --updateSnapshot"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.10.1",
