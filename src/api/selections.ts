@@ -143,23 +143,37 @@ export function extractUniqueAuthors(tracks: TrackType[]): string[] {
   return Array.from(authors);
 }
 
-export function filterTracksByGenre(
+export const filterTracksByAuthors = (
+  tracks: TrackType[],
+  authors: string[],
+): TrackType[] => {
+  if (authors.length === 0) return tracks;
+  return tracks.filter((track) => authors.includes(track.author));
+};
+
+export const filterTracksByGenres = (
+  tracks: TrackType[],
+  genres: string[],
+): TrackType[] => {
+  if (genres.length === 0) return tracks;
+  return tracks.filter((track) =>
+    track.genre.some((genre) => genres.includes(genre)),
+  );
+};
+
+export const filterTracksByGenre = (
   tracks: TrackType[],
   genre: string,
-): TrackType[] {
-  if (!genre || !Array.isArray(tracks)) return tracks;
-  return tracks.filter(
-    (track) => Array.isArray(track.genre) && track.genre.includes(genre),
-  );
-}
+): TrackType[] => {
+  return tracks.filter((track) => track.genre.includes(genre));
+};
 
-export function filterTracksByAuthor(
+export const filterTracksByAuthor = (
   tracks: TrackType[],
   author: string,
-): TrackType[] {
-  if (!author || !Array.isArray(tracks)) return tracks;
+): TrackType[] => {
   return tracks.filter((track) => track.author === author);
-}
+};
 
 export function sortTracksByDate(
   tracks: TrackType[],

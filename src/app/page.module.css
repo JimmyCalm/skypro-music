@@ -426,3 +426,96 @@
 .emptyState__button:hover {
   background-color: #1ed760;
 }
+
+/* Стили для поиска с кнопкой очистки */
+.centerblock__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search__clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 5px;
+  transition: color 0.3s ease;
+}
+
+.search__clear:hover {
+  color: #fff;
+}
+
+/* Стили для кнопки сброса фильтров */
+.filter__reset {
+  background: none;
+  border: 1px solid #888;
+  border-radius: 60px;
+  padding: 6px 20px;
+  color: #888;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  margin-left: 10px;
+}
+
+.filter__reset:hover {
+  border-color: #d9b6ff;
+  color: #d9b6ff;
+}
+
+/* Стили для статуса фильтров */
+.filter__status {
+  background: rgba(49, 49, 49, 0.8);
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin: 15px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter__status__label {
+  color: #888;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.filter__status__item {
+  background: rgba(173, 97, 255, 0.2);
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #ad61ff;
+}
+
+/* Счетчик треков */
+.trackCount {
+  color: #888;
+  font-size: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid #4e4e4e;
+  margin-bottom: 10px;
+}
+
+/* Адаптация для пустого состояния */
+.emptyState__button {
+  background: rgba(173, 97, 255, 0.1);
+  border: 1px solid #ad61ff;
+  border-radius: 60px;
+  padding: 8px 24px;
+  color: #ad61ff;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 15px;
+  transition: all 0.3s ease;
+}
+
+.emptyState__button:hover {
+  background: rgba(173, 97, 255, 0.2);
+}

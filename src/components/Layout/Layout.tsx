@@ -8,15 +8,10 @@ import styles from './Layout.module.css';
 
 interface LayoutProps {
   children: ReactNode;
-  showSearch?: boolean;
   pageTitle?: string;
 }
 
-export default function Layout({
-  children,
-  showSearch = false,
-  pageTitle,
-}: LayoutProps) {
+export default function Layout({ children, pageTitle }: LayoutProps) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.container}>
@@ -24,27 +19,7 @@ export default function Layout({
           <Navbar />
 
           <div className={styles.centerblock}>
-            {/* Поиск, если нужен */}
-            {showSearch && (
-              <div className={styles.centerblock__search}>
-                <svg className={styles.search__svg}>
-                  <use xlinkHref="/img/icon/sprite.svg#icon-search"></use>
-                </svg>
-                <input
-                  className={styles.search__text}
-                  type="search"
-                  placeholder="Поиск"
-                  name="search"
-                />
-              </div>
-            )}
-
-            {/* Заголовок страницы, если передан */}
-            {pageTitle && (
-              <h2 className={styles.centerblock__h2}>{pageTitle}</h2>
-            )}
-
-            {/* Контент страницы */}
+            {/* Контент страницы (поиск теперь в компонентах страниц) */}
             {children}
           </div>
 

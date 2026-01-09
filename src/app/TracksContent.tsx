@@ -8,10 +8,11 @@ import { TrackType } from '@/sharedTypes/types';
 import { setCurrentPlaylist } from '@/store/features/trackSlice';
 import { useAppDispatch } from '@/store/store';
 import {
-  filterTracksByGenre,
-  filterTracksByAuthor,
+  filterTracksByGenres,
+  filterTracksByAuthors,
   sortTracksByDate,
 } from '@/api/selections';
+import { useFilters } from '@/hooks/useFilters';
 import styles from './page.module.css';
 
 interface TracksContentProps {
@@ -29,14 +30,15 @@ export default function TracksContent({
   filterData,
   pageTitle = 'Треки',
 }: TracksContentProps) {
-  const [activeFilter, setActiveFilter] = useState<
-    'author' | 'year' | 'genre' | null
-  >(null);
-  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [selectedYear, setSelectedYear] = useState<string | null>(null);
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const dispatch = useAppDispatch();
+  const {
+    filters,
+    activeFilter,
+    updateFilters,
+    resetFilters,
+    handleFilterToggle,
+    hasActiveFilters,
+  } = useFilters();
 
   useEffect(() => {
     dispatch(setCurrentPlaylist(initialTracks));
@@ -45,21 +47,28 @@ export default function TracksContent({
   const filteredTracks = useMemo(() => {
     let result = [...initialTracks];
 
-    if (selectedAuthor) {
-      result = filterTracksByAuthor(result, selectedAuthor);
+    // Фильтрация по нескольким авторам
+    if (filters.authors.length > 0) {
+      result = filterTracksByAuthors(result, filters.authors);
     }
 
-    if (selectedGenre) {
-      result = filterTracksByGenre(result, selectedGenre);
+    // Фильтрация по нескольким жанрам
+    if (filters.genres.length > 0) {
+      result = filterTracksByGenres(result, filters.genres);
     }
 
-    if (selectedYear) {
-      const order = selectedYear === 'сначала новые' ? 'newest' : 'oldest';
-      result = sortTracksByDate(result, order);
+    // Сортировка по году (только одна опция может быть активна)
+    if (filters.years.length > 0) {
+      const yearFilter = filters.years[0]; // Берем первую выбранную опцию
+      if (yearFilter === 'сначала новые' || yearFilter === 'сначала старые') {
+        const order = yearFilter === 'сначала новые' ? 'newest' : 'oldest';
+        result = sortTracksByDate(result, order);
+      }
     }
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    // Поиск
+    if (filters.searchQuery.trim()) {
+      const query = filters.searchQuery.toLowerCase();
       result = result.filter(
         (track) =>
           track.name.toLowerCase().includes(query) ||
@@ -70,25 +79,48 @@ export default function TracksContent({
     }
 
     return result;
-  }, [initialTracks, selectedAuthor, selectedGenre, selectedYear, searchQuery]);
+  }, [initialTracks, filters]);
 
-  const handleFilterToggle = (filterType: 'author' | 'year' | 'genre') => {
-    setActiveFilter(activeFilter === filterType ? null : filterType);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateFilters({ searchQuery: e.target.value });
   };
 
-  const handleResetFilters = () => {
-    setSelectedAuthor(null);
-    setSelectedYear(null);
-    setSelectedGenre(null);
-    setSearchQuery('');
-    setActiveFilter(null);
+  const handleSearchClear = () => {
+    updateFilters({ searchQuery: '' });
   };
 
-  const hasActiveFilters =
-    selectedAuthor || selectedGenre || selectedYear || searchQuery;
+  const handleResetAllFilters = () => {
+    resetFilters();
+  };
 
   return (
-    <Layout pageTitle={pageTitle} showSearch>
+    <Layout pageTitle={pageTitle}>
+      {/* Поиск с кнопкой очистки */}
+      <div className={styles.centerblock__search}>
+        <svg className={styles.search__svg}>
+          <use xlinkHref="/img/icon/sprite.svg#icon-search"></use>
+        </svg>
+        <input
+          className={styles.search__text}
+          type="search"
+          placeholder="Поиск по трекам, исполнителям, альбомам..."
+          name="search"
+          value={filters.searchQuery}
+          onChange={handleSearchChange}
+        />
+        {filters.searchQuery && (
+          <button
+            className={styles.search__clear}
+            onClick={handleSearchClear}
+            title="Очистить поиск"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      <h2 className={styles.centerblock__h2}>{pageTitle}</h2>
+
       {/* Фильтры */}
       <div className={styles.centerblock__filter}>
         <div className={styles.filter__title}>Искать по:</div>
@@ -96,27 +128,67 @@ export default function TracksContent({
           title="исполнителю"
           items={filterData.authors}
           isOpen={activeFilter === 'author'}
-          selectedItem={selectedAuthor}
+          selectedItems={filters.authors}
           onToggle={() => handleFilterToggle('author')}
-          onItemSelect={setSelectedAuthor}
+          onItemSelect={(items) => updateFilters({ authors: items })}
         />
         <Filter
           title="году выпуска"
           items={filterData.years}
           isOpen={activeFilter === 'year'}
-          selectedItem={selectedYear}
+          selectedItems={filters.years}
           onToggle={() => handleFilterToggle('year')}
-          onItemSelect={setSelectedYear}
+          onItemSelect={(items) => updateFilters({ years: items })}
         />
         <Filter
           title="жанру"
           items={filterData.genres}
           isOpen={activeFilter === 'genre'}
-          selectedItem={selectedGenre}
+          selectedItems={filters.genres}
           onToggle={() => handleFilterToggle('genre')}
-          onItemSelect={setSelectedGenre}
+          onItemSelect={(items) => updateFilters({ genres: items })}
         />
+
+        {/* Кнопка сброса всех фильтров */}
+        {hasActiveFilters && (
+          <button
+            className={styles.filter__reset}
+            onClick={handleResetAllFilters}
+            title="Сбросить все фильтры"
+          >
+            Сбросить фильтры
+          </button>
+        )}
       </div>
+
+      {/* Статус фильтров */}
+      {hasActiveFilters && (
+        <div className={styles.filter__status}>
+          <span className={styles.filter__status__label}>
+            Активные фильтры:
+          </span>
+          {filters.authors.length > 0 && (
+            <span className={styles.filter__status__item}>
+              Исполнители: {filters.authors.join(', ')}
+            </span>
+          )}
+          {filters.genres.length > 0 && (
+            <span className={styles.filter__status__item}>
+              Жанры: {filters.genres.join(', ')}
+            </span>
+          )}
+          {filters.years.length > 0 && (
+            <span className={styles.filter__status__item}>
+              Сортировка: {filters.years.join(', ')}
+            </span>
+          )}
+          {filters.searchQuery && (
+            <span className={styles.filter__status__item}>
+              Поиск: "{filters.searchQuery}"
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Список треков */}
       <div className={styles.centerblock__content}>
@@ -161,13 +233,20 @@ export default function TracksContent({
               </p>
               <button
                 className={styles.emptyState__button}
-                onClick={handleResetFilters}
+                onClick={handleResetAllFilters}
               >
                 Сбросить фильтры
               </button>
             </div>
           ) : (
-            filteredTracks.map((track) => <Track key={track._id} {...track} />)
+            <>
+              <div className={styles.trackCount}>
+                Найдено треков: {filteredTracks.length}
+              </div>
+              {filteredTracks.map((track) => (
+                <Track key={track._id} {...track} />
+              ))}
+            </>
           )}
         </div>
       </div>

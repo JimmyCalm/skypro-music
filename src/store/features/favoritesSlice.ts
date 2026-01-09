@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { TrackType } from '@/sharedTypes/types';
 import { getFavoriteTracks, isApiError } from '@/api';
 
-type FavoritesState = {
+export type FavoritesState = {
   tracks: TrackType[];
   loading: boolean;
   error: string | null;
