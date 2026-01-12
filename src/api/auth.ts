@@ -97,7 +97,7 @@ export async function signIn(
     });
 
     // Сохраняем данные пользователя и токены
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'string') {
       localStorage.setItem('accessToken', response.data.access);
       localStorage.setItem('refreshToken', response.data.refresh);
       localStorage.setItem('user', JSON.stringify(response.data));
@@ -143,7 +143,7 @@ export async function refreshToken(
 }
 
 export async function logout(): Promise<{ success: boolean }> {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'string') {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
