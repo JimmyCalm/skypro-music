@@ -139,6 +139,7 @@ export default function TracksContent({
           selectedItems={filters.years}
           onToggle={() => handleFilterToggle('year')}
           onItemSelect={(items) => updateFilters({ years: items })}
+          selectionMode="single"
         />
         <Filter
           title="жанру"

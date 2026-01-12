@@ -5,40 +5,43 @@ interface FilterProps {
   title: string;
   items: string[];
   isOpen: boolean;
-  selectedItems: string[]; // Изменяем на массив
+  selectedItems: string[];
   onToggle: () => void;
-  onItemSelect?: (items: string[]) => void; // Изменяем сигнатуру
+  onItemSelect?: (items: string[]) => void;
   displayMode?: 'nameOnly' | 'titleOnly';
+  selectionMode?: 'multiple' | 'single';
 }
 
 export default function Filter({
   title,
   items,
   isOpen,
-  selectedItems = [], // По умолчанию пустой массив
+  selectedItems = [],
   onToggle,
   onItemSelect,
   displayMode = 'nameOnly',
+  selectionMode = 'multiple',
 }: FilterProps) {
   const handleItemClick = (item: string) => {
     if (onItemSelect) {
-      // Проверяем, выбран ли уже элемент
-      const isSelected = selectedItems.includes(item);
       let newSelectedItems: string[];
 
-      if (isSelected) {
-        // Удаляем элемент из выбранных
-        newSelectedItems = selectedItems.filter((i) => i !== item);
+      if (selectionMode === 'single') {
+        const isSelected = selectedItems.includes(item);
+        newSelectedItems = isSelected ? [] : [item];
       } else {
-        // Добавляем элемент к выбранным
-        newSelectedItems = [...selectedItems, item];
+        const isSelected = selectedItems.includes(item);
+        if (isSelected) {
+          newSelectedItems = selectedItems.filter((i) => i !== item);
+        } else {
+          newSelectedItems = [...selectedItems, item];
+        }
       }
 
       onItemSelect(newSelectedItems);
     }
   };
 
-  // Формируем текст для кнопки фильтра
   const getButtonText = () => {
     if (selectedItems.length === 0) {
       return title;
