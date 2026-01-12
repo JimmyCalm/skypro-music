@@ -96,13 +96,11 @@ export async function signIn(
       password,
     });
 
-    // Сохраняем данные пользователя и токены
     if (typeof window !== 'string') {
       localStorage.setItem('accessToken', response.data.access);
       localStorage.setItem('refreshToken', response.data.refresh);
       localStorage.setItem('user', JSON.stringify(response.data));
 
-      // Вызываем событие для инициализации приложения
       window.dispatchEvent(new CustomEvent('user-logged-in'));
     }
 
