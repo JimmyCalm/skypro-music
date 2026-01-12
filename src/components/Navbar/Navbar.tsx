@@ -28,6 +28,13 @@ export default function Navbar() {
     closeMenu();
   };
 
+  const handleAuthClick = (e: React.MouseEvent) => {
+    if (isAuthenticated) {
+      e.preventDefault();
+      handleLogout();
+    }
+  };
+
   return (
     <nav className={`${styles.nav} ${isMenuOpen ? styles.nav_menu_open : ''}`}>
       <Link href="/" className={styles.nav__logo}>
@@ -67,29 +74,13 @@ export default function Navbar() {
             </Link>
           </li>
           <li className={styles.menu__item}>
-            {isAuthenticated ? (
-              <button
-                className={styles.menu__link}
-                onClick={handleLogout}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'left',
-                }}
-              >
-                Выйти
-              </button>
-            ) : (
-              <Link
-                href="/signin"
-                className={styles.menu__link}
-                onClick={closeMenu}
-              >
-                Войти
-              </Link>
-            )}
+            <Link
+              href={isAuthenticated ? '#' : '/signin'}
+              className={styles.menu__link}
+              onClick={handleAuthClick}
+            >
+              {isAuthenticated ? 'Выйти' : 'Войти'}
+            </Link>
           </li>
         </ul>
       </div>
