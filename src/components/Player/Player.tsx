@@ -462,7 +462,7 @@ export default function Player() {
                       <use
                         xlinkHref={
                           !isAuthenticated
-                            ? '/img/icon/sprite.svg#icon-dislike'
+                            ? '/img/icon/sprite.svg#icon-like'
                             : isFavorite
                               ? '/img/icon/sprite.svg#icon-like-active'
                               : '/img/icon/sprite.svg#icon-like'
@@ -471,7 +471,6 @@ export default function Player() {
                     </svg>
                     {isLoading && <div className={styles.loadingSpinner}></div>}
                   </div>
-
                   <div
                     className={`${styles.trackPlay__dislike} ${styles.btnIcon}`}
                     onClick={() => alert('Функция пока не реализована')}
