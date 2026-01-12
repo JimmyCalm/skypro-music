@@ -471,15 +471,6 @@ export default function Player() {
                     </svg>
                     {isLoading && <div className={styles.loadingSpinner}></div>}
                   </div>
-                  <div
-                    className={`${styles.trackPlay__dislike} ${styles.btnIcon}`}
-                    onClick={() => alert('Функция пока не реализована')}
-                    title="Не нравится"
-                  >
-                    <svg className={styles.trackPlay__dislikeSvg}>
-                      <use xlinkHref="/img/icon/sprite.svg#icon-dislike"></use>
-                    </svg>
-                  </div>
                 </div>
               </div>
             </div>
