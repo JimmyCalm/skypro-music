@@ -53,7 +53,7 @@ export default function Signin() {
         return;
       }
 
-      // 3. Сохраняем данные в localStorage
+      // 3. Сохраняем данные и токены в localStorage
       localStorage.setItem('accessToken', tokenResult.access);
       localStorage.setItem('refreshToken', tokenResult.refresh);
       localStorage.setItem('user', JSON.stringify(authResult));
@@ -67,7 +67,12 @@ export default function Signin() {
         }),
       );
 
-      // 5. Перенаправляем на главную
+      // 5. Уведомляем приложение, что пользователь вошёл
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('user-logged-in'));
+      }
+
+      // 6. Перенаправляем на главную
       router.push('/');
     } catch (err: unknown) {
       console.error('Sign in error:', err);

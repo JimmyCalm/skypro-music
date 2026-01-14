@@ -56,7 +56,9 @@ export default function Player() {
         });
         setIsFavorite(userInFavorites);
       } else {
-        setIsFavorite(staredUsers.length > 0);
+        // Если пользователя нет, не подсвечиваем лайк как активный,
+        // даже если трек в избранном у других пользователей
+        setIsFavorite(false);
       }
     } else {
       setIsFavorite(false);
@@ -339,10 +341,13 @@ export default function Player() {
   // Рассчитываем процент прогресса
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  if (!currentTrack) {
+    return null;
+  }
+
   return (
     <>
       <audio ref={audioRef} />
-
       <div className={styles.bar}>
         <div className={styles.bar__content}>
           {/* Время трека справа сверху */}
@@ -462,7 +467,7 @@ export default function Player() {
                       <use
                         xlinkHref={
                           !isAuthenticated
-                            ? '/img/icon/sprite.svg#icon-like'
+                            ? '/img/icon/sprite.svg#icon-dislike'
                             : isFavorite
                               ? '/img/icon/sprite.svg#icon-like-active'
                               : '/img/icon/sprite.svg#icon-like'
@@ -470,6 +475,16 @@ export default function Player() {
                       ></use>
                     </svg>
                     {isLoading && <div className={styles.loadingSpinner}></div>}
+                  </div>
+
+                  <div
+                    className={`${styles.trackPlay__dislike} ${styles.btnIcon}`}
+                    onClick={() => alert('Функция пока не реализована')}
+                    title="Не нравится"
+                  >
+                    <svg className={styles.trackPlay__dislikeSvg}>
+                      <use xlinkHref="/img/icon/sprite.svg#icon-dislike"></use>
+                    </svg>
                   </div>
                 </div>
               </div>

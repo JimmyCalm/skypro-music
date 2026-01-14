@@ -2,21 +2,22 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/store';
 import { logout } from '@/store/features/authSlice';
+import { clearFavorites } from '@/store/features/favoritesSlice';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const dispatch = useAppDispatch();
   const router = useRouter();
 
   useEffect(() => {
-    setIsClient(true);
+    setHasMounted(true);
   }, []);
 
   const toggleMenu = () => {
@@ -29,6 +30,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(clearFavorites());
     router.push('/signin');
     closeMenu();
   };
@@ -72,32 +74,28 @@ export default function Navbar() {
             </Link>
           </li>
           <li className={styles.menu__item}>
-            {isClient ? (
-              isAuthenticated ? (
-                <button
-                  className={styles.menu__link}
-                  onClick={handleLogout}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'left',
-                  }}
-                >
-                  Выйти
-                </button>
-              ) : (
-                <Link
-                  href="/signin"
-                  className={styles.menu__link}
-                  onClick={closeMenu}
-                >
-                  Войти
-                </Link>
-              )
+            {hasMounted && isAuthenticated ? (
+              <button
+                className={styles.menu__link}
+                onClick={handleLogout}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'left',
+                }}
+              >
+                Выйти
+              </button>
             ) : (
-              <div className={styles.menu__link}>Войти</div>
+              <Link
+                href="/signin"
+                className={styles.menu__link}
+                onClick={closeMenu}
+              >
+                Войти
+              </Link>
             )}
           </li>
         </ul>

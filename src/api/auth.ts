@@ -95,15 +95,6 @@ export async function signIn(
       email,
       password,
     });
-
-    if (typeof window !== 'string') {
-      localStorage.setItem('accessToken', response.data.access);
-      localStorage.setItem('refreshToken', response.data.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data));
-
-      window.dispatchEvent(new CustomEvent('user-logged-in'));
-    }
-
     return response.data as AuthResponse;
   } catch (error: unknown) {
     return handleApiError(error);
@@ -141,7 +132,7 @@ export async function refreshToken(
 }
 
 export async function logout(): Promise<{ success: boolean }> {
-  if (typeof window !== 'string') {
+  if (typeof window !== 'undefined') {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
