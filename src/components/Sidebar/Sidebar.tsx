@@ -1,8 +1,11 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/store';
 import { logout } from '@/store/features/authSlice';
+import { clearFavorites } from '@/store/features/favoritesSlice';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar() {
@@ -12,6 +15,7 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(clearFavorites());
     router.push('/signin');
   };
 

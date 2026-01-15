@@ -134,6 +134,7 @@ export default function SelectionContent({
           selectedItems={filters.years}
           onToggle={() => handleFilterToggle('year')}
           onItemSelect={(items) => updateFilters({ years: items })}
+          selectionMode="single"
         />
         <Filter
           title="жанру"

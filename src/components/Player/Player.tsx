@@ -56,7 +56,9 @@ export default function Player() {
         });
         setIsFavorite(userInFavorites);
       } else {
-        setIsFavorite(staredUsers.length > 0);
+        // Если пользователя нет, не подсвечиваем лайк как активный,
+        // даже если трек в избранном у других пользователей
+        setIsFavorite(false);
       }
     } else {
       setIsFavorite(false);
@@ -339,10 +341,13 @@ export default function Player() {
   // Рассчитываем процент прогресса
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  if (!currentTrack) {
+    return null;
+  }
+
   return (
     <>
       <audio ref={audioRef} />
-
       <div className={styles.bar}>
         <div className={styles.bar__content}>
           {/* Время трека справа сверху */}

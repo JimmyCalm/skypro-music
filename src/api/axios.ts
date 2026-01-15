@@ -29,7 +29,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Если 401 и это не запрос обновления токена
+    const authEndpoints = ['/user/login/', '/user/signup/', '/user/token/'];
+
+    if (authEndpoints.includes(originalRequest?.url)) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Проверяем, не является ли это запросом на refresh
       if (originalRequest.url === '/user/token/refresh/') {

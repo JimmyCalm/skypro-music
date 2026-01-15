@@ -2,17 +2,23 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/store';
 import { logout } from '@/store/features/authSlice';
+import { clearFavorites } from '@/store/features/favoritesSlice';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const dispatch = useAppDispatch();
   const router = useRouter();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -24,6 +30,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(clearFavorites());
     router.push('/signin');
     closeMenu();
   };
@@ -67,7 +74,7 @@ export default function Navbar() {
             </Link>
           </li>
           <li className={styles.menu__item}>
-            {isAuthenticated ? (
+            {hasMounted && isAuthenticated ? (
               <button
                 className={styles.menu__link}
                 onClick={handleLogout}

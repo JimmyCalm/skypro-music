@@ -95,17 +95,6 @@ export async function signIn(
       email,
       password,
     });
-
-    // Сохраняем данные пользователя и токены
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', response.data.access);
-      localStorage.setItem('refreshToken', response.data.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data));
-
-      // Вызываем событие для инициализации приложения
-      window.dispatchEvent(new CustomEvent('user-logged-in'));
-    }
-
     return response.data as AuthResponse;
   } catch (error: unknown) {
     return handleApiError(error);

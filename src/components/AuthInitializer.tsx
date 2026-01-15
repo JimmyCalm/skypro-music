@@ -9,7 +9,9 @@ export default function AuthInitializer() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') return;
+
+    const syncUserFromStorage = () => {
       const userData = localStorage.getItem('user');
       const accessToken = localStorage.getItem('accessToken');
       const refreshToken = localStorage.getItem('refreshToken');
@@ -24,19 +26,7 @@ export default function AuthInitializer() {
               refreshToken: refreshToken || undefined,
             }),
           );
-
           dispatch(loadFavorites());
-
-          // Добавляем слушатель события входа пользователя
-          const handleUserLoggedIn = () => {
-            dispatch(loadFavorites());
-          };
-
-          window.addEventListener('user-logged-in', handleUserLoggedIn);
-
-          return () => {
-            window.removeEventListener('user-logged-in', handleUserLoggedIn);
-          };
         } catch (error) {
           console.error('Error parsing user data:', error);
           localStorage.removeItem('user');
@@ -44,7 +34,19 @@ export default function AuthInitializer() {
           localStorage.removeItem('refreshToken');
         }
       }
-    }
+    };
+
+    syncUserFromStorage();
+
+    const handleUserLoggedIn = () => {
+      syncUserFromStorage();
+    };
+
+    window.addEventListener('user-logged-in', handleUserLoggedIn);
+
+    return () => {
+      window.removeEventListener('user-logged-in', handleUserLoggedIn);
+    };
   }, [dispatch]);
 
   return null;

@@ -21,7 +21,8 @@ export default function FavoritesPage() {
   }, [dispatch]);
 
   return (
-    <Layout pageTitle="Мой плейлист">
+    <Layout>
+      <h2 className={styles.centerblock__h2}>Мой плейлист</h2>
       {isLoading ? (
         <div className={styles.loadingContainer}>
           <div className={styles.spinner}></div>
